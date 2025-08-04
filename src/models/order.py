@@ -1,9 +1,9 @@
 from datetime import datetime
-from src.database import db
 import pytz
+from src.database import db
 
 class Order(db.Model):
-    __tablename__ = 'orders'
+    __tablename__ = "orders"
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -23,7 +23,7 @@ class Order(db.Model):
 
 
 class OrderItem(db.Model):
-    __tablename__ = 'order_items'
+    __tablename__ = "order_items"
 
     id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.Integer, db.ForeignKey("orders.id"), nullable=False)
@@ -35,5 +35,3 @@ class OrderItem(db.Model):
 
     def __repr__(self):
         return f"<OrderItem {self.id}>"
-
-
