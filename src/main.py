@@ -9,6 +9,29 @@ from dotenv import load_dotenv
 # Carrega variáveis de ambiente do arquivo .env (apenas em desenvolvimento)
 load_dotenv()
 
+import logging
+from flask import Flask
+
+app = Flask(__name__)
+
+# Configuração básica de log
+logging.basicConfig(level=logging.INFO)  # mudar para DEBUG durante debug
+handler = logging.StreamHandler()
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter(
+    "[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
+)
+handler.setFormatter(formatter)
+app.logger.addHandler(handler)
+
+@app.errorhandler(500)
+def internal_error(e):
+    app.logger.exception("Erro interno do servidor")
+    return "Erro interno", 500
+
+# seu restante de setup abaixo...
+
+
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
