@@ -1,0 +1,570 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Pedidos - RestaurantePro{% endblock %}
+{% block header %}Gestão de Pedidos{% endblock %}
+
+{% block content %}
+<!-- Filtros de Período -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-filter text-primary me-2"></i>Filtros por Período
+                    </h6>
+                    <span class="badge bg-primary">{{ total_orders }} pedidos</span>
+                </div>
+                <div class="btn-group flex-wrap" role="group">
+                    <a href="{{ url_for('admin.orders', period='all', status=status_filter) }}" 
+                       class="btn {% if period_filter == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        <i class="fas fa-calendar me-1"></i>Todos
+                    </a>
+                    <a href="{{ url_for('admin.orders', period='today', status=status_filter) }}" 
+                       class="btn {% if period_filter == 'today' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        <i class="fas fa-calendar-day me-1"></i>Hoje
+                    </a>
+                    <a href="{{ url_for('admin.orders', period='week', status=status_filter) }}" 
+                       class="btn {% if period_filter == 'week' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        <i class="fas fa-calendar-week me-1"></i>Semana
+                    </a>
+                    <a href="{{ url_for('admin.orders', period='month', status=status_filter) }}" 
+                       class="btn {% if period_filter == 'month' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        <i class="fas fa-calendar-alt me-1"></i>Mês
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estatísticas do Período -->
+<div class="row g-4 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card h-100">
+            <div class="card-body position-relative">
+                <div class="stat-label">Total de Pedidos</div>
+                <div class="stat-value">{{ total_orders }}</div>
+                <div class="text-muted small">
+                    <i class="fas fa-shopping-bag text-primary me-1"></i>
+                    Período selecionado
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-shopping-bag"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card success h-100">
+            <div class="card-body position-relative">
+                <div class="stat-label">Receita Total</div>
+                <div class="stat-value">R$ {{ "%.0f"|format(total_revenue) }}</div>
+                <div class="text-muted small">
+                    <i class="fas fa-arrow-up text-success me-1"></i>
+                    Faturamento
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card warning h-100">
+            <div class="card-body position-relative">
+                <div class="stat-label">Pedidos Pendentes</div>
+                <div class="stat-value">{{ pending_orders }}</div>
+                <div class="text-muted small">
+                    <i class="fas fa-clock text-warning me-1"></i>
+                    Aguardando
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-hourglass-half"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card info h-100">
+            <div class="card-body position-relative">
+                <div class="stat-label">Ticket Médio</div>
+                <div class="stat-value">
+                    {% if total_orders > 0 %}
+                        R$ {{ "%.0f"|format(total_revenue / total_orders) }}
+                    {% else %}
+                        R$ 0
+                    {% endif %}
+                </div>
+                <div class="text-muted small">
+                    <i class="fas fa-calculator text-info me-1"></i>
+                    Por pedido
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-calculator"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros de Status -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="mb-3">
+                    <i class="fas fa-tasks text-primary me-2"></i>Filtros por Status
+                </h6>
+                <div class="btn-group flex-wrap" role="group">
+                    <a href="{{ url_for('admin.orders', status='all', period=period_filter) }}" 
+                       class="btn {% if status_filter == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        <i class="fas fa-list me-1"></i>Todos
+                    </a>
+                    <a href="{{ url_for('admin.orders', status='recebido', period=period_filter) }}" 
+                       class="btn {% if status_filter == 'recebido' %}btn-info{% else %}btn-outline-info{% endif %}">
+                        <i class="fas fa-inbox me-1"></i>Recebidos
+                    </a>
+                    <a href="{{ url_for('admin.orders', status='em_preparo', period=period_filter) }}" 
+                       class="btn {% if status_filter == 'em_preparo' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                        <i class="fas fa-utensils me-1"></i>Em Preparo
+                    </a>
+                    <a href="{{ url_for('admin.orders', status='pronto', period=period_filter) }}" 
+                       class="btn {% if status_filter == 'pronto' %}btn-success{% else %}btn-outline-success{% endif %}">
+                        <i class="fas fa-check-circle me-1"></i>Prontos
+                    </a>
+                    <a href="{{ url_for('admin.orders', status='entregue', period=period_filter) }}" 
+                       class="btn {% if status_filter == 'entregue' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+                        <i class="fas fa-truck me-1"></i>Entregues
+                    </a>
+                    <a href="{{ url_for('admin.orders', status='cancelado', period=period_filter) }}" 
+                       class="btn {% if status_filter == 'cancelado' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                        <i class="fas fa-times-circle me-1"></i>Cancelados
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Pedidos -->
+<div class="table-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">
+            <i class="fas fa-list text-primary me-2"></i>Lista de Pedidos
+            {% if period_filter != 'all' or status_filter != 'all' %}
+                <span class="text-muted">
+                    {% if period_filter != 'all' %}
+                        - 
+                        {% if period_filter == 'today' %}Hoje
+                        {% elif period_filter == 'week' %}Esta Semana
+                        {% elif period_filter == 'month' %}Este Mês
+                        {% endif %}
+                    {% endif %}
+                    {% if status_filter != 'all' %}
+                        - {{ status_filter|title }}
+                    {% endif %}
+                </span>
+            {% endif %}
+        </h6>
+        <div class="d-flex gap-2">
+            <span class="badge bg-primary">{{ total_orders }} pedidos</span>
+            <button class="btn btn-sm btn-outline-primary" onclick="location.reload()">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if orders %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Pedido</th>
+                        <th>Cliente</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                        <th>Tipo</th>
+                        <th>Data</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="badge bg-primary rounded-pill me-2">#{{ order.id }}</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm bg-light rounded-circle me-3 d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-user text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">{{ order.user.username }}</div>
+                                    <div class="text-muted small">{{ order.user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="fw-semibold text-success">R$ {{ "%.2f"|format(order.total_amount) }}</span>
+                        </td>
+                        <td>
+                            {% if order.status == 'recebido' %}
+                                <span class="badge bg-info">
+                                    <i class="fas fa-inbox me-1"></i>{{ order.status|title }}
+                                </span>
+                            {% elif order.status == 'em_preparo' %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-utensils me-1"></i>Em Preparo
+                                </span>
+                            {% elif order.status == 'pronto' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle me-1"></i>{{ order.status|title }}
+                                </span>
+                            {% elif order.status == 'entregue' %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-truck me-1"></i>{{ order.status|title }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-times-circle me-1"></i>{{ order.status|title }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-{% if order.delivery_type == 'entrega' %}truck{% else %}store{% endif %} me-1"></i>
+                                {{ order.delivery_type|title }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="text-muted small">
+                                {{ order.created_at.strftime('%d/%m/%Y') }}<br>
+                                {{ order.created_at.strftime('%H:%M') }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-primary" 
+                                        data-bs-toggle="modal" data-bs-target="#orderModal{{ order.id }}"
+                                        title="Ver detalhes">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-warning" 
+                                        data-bs-toggle="modal" data-bs-target="#statusModal{{ order.id }}"
+                                        title="Alterar status">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Modal para ver detalhes do pedido -->
+                    <div class="modal fade" id="orderModal{{ order.id }}" tabindex="-1">
+                        <div class="modal-dialog modal-xl">
+                            <div class="modal-content">
+                                <div class="modal-header" style="background: var(--primary-gradient); color: white;">
+                                    <h5 class="modal-title">
+                                        <i class="fas fa-receipt me-2"></i>
+                                        Detalhes do Pedido #{{ order.id }}
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <!-- Informações principais -->
+                                    <div class="row g-4 mb-4">
+                                        <div class="col-md-4">
+                                            <div class="card h-100">
+                                                <div class="card-header bg-light">
+                                                    <h6 class="mb-0 text-primary">
+                                                        <i class="fas fa-user me-2"></i>Cliente
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <p class="mb-2">
+                                                        <strong>Nome:</strong><br>
+                                                        <span class="text-muted">{{ order.user.username }}</span>
+                                                    </p>
+                                                    <p class="mb-0">
+                                                        <strong>Email:</strong><br>
+                                                        <span class="text-muted">{{ order.user.email }}</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <div class="card h-100">
+                                                <div class="card-header bg-light">
+                                                    <h6 class="mb-0 text-warning">
+                                                        <i class="fas fa-info-circle me-2"></i>Status
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <p class="mb-2">
+                                                        <strong>Status Atual:</strong><br>
+                                                        {% if order.status == 'recebido' %}
+                                                            <span class="badge bg-info fs-6">
+                                                                <i class="fas fa-inbox me-1"></i>{{ order.status|title }}
+                                                            </span>
+                                                        {% elif order.status == 'em_preparo' %}
+                                                            <span class="badge bg-warning fs-6">
+                                                                <i class="fas fa-utensils me-1"></i>Em Preparo
+                                                            </span>
+                                                        {% elif order.status == 'pronto' %}
+                                                            <span class="badge bg-success fs-6">
+                                                                <i class="fas fa-check-circle me-1"></i>{{ order.status|title }}
+                                                            </span>
+                                                        {% elif order.status == 'entregue' %}
+                                                            <span class="badge bg-secondary fs-6">
+                                                                <i class="fas fa-truck me-1"></i>{{ order.status|title }}
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="badge bg-danger fs-6">
+                                                                <i class="fas fa-times-circle me-1"></i>{{ order.status|title }}
+                                                            </span>
+                                                        {% endif %}
+                                                    </p>
+                                                    <p class="mb-0">
+                                                        <strong>Tipo:</strong><br>
+                                                        <span class="text-muted">
+                                                            <i class="fas fa-{% if order.delivery_type == 'entrega' %}truck{% else %}store{% endif %} me-1"></i>
+                                                            {{ order.delivery_type|title }}
+                                                        </span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <div class="card h-100">
+                                                <div class="card-header bg-light">
+                                                    <h6 class="mb-0 text-success">
+                                                        <i class="fas fa-calendar me-2"></i>Informações
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <p class="mb-2">
+                                                        <strong>Data:</strong><br>
+                                                        <span class="text-muted">{{ order.created_at.strftime('%d/%m/%Y') }}</span>
+                                                    </p>
+                                                    <p class="mb-0">
+                                                        <strong>Horário:</strong><br>
+                                                        <span class="text-muted">{{ order.created_at.strftime('%H:%M') }}</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Itens do pedido -->
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0 text-primary">
+                                                <i class="fas fa-utensils me-2"></i>Itens do Pedido
+                                            </h6>
+                                        </div>
+                                        <div class="card-body p-0">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover mb-0">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>Produto</th>
+                                                            <th>Quantidade</th>
+                                                            <th>Preço Unit.</th>
+                                                            <th>Subtotal</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for item in order.items %}
+                                                        <tr>
+                                                            <td>
+                                                                <div class="d-flex align-items-center">
+                                                                    <div class="avatar-sm bg-primary bg-opacity-10 rounded me-3 d-flex align-items-center justify-content-center">
+                                                                        <i class="fas fa-utensils text-primary"></i>
+                                                                    </div>
+                                                                    <div>
+                                                                        <div class="fw-semibold">{{ item.product.name }}</div>
+                                                                        <div class="text-muted small">{{ item.product.category.name }}</div>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <span class="badge bg-light text-dark">{{ item.quantity }}x</span>
+                                                            </td>
+                                                            <td>R$ {{ "%.2f"|format(item.unit_price) }}</td>
+                                                            <td>
+                                                                <span class="fw-semibold text-success">
+                                                                    R$ {{ "%.2f"|format(item.quantity * item.unit_price) }}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                    <tfoot class="table-light">
+                                                        <tr>
+                                                            <th colspan="3" class="text-end">Total:</th>
+                                                            <th class="text-success">R$ {{ "%.2f"|format(order.total_amount) }}</th>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                        <i class="fas fa-times me-1"></i>Fechar
+                                    </button>
+                                    <button type="button" class="btn btn-primary" 
+                                            data-bs-toggle="modal" data-bs-target="#statusModal{{ order.id }}"
+                                            data-bs-dismiss="modal">
+                                        <i class="fas fa-edit me-1"></i>Alterar Status
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal para alterar status -->
+                    <div class="modal fade" id="statusModal{{ order.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header" style="background: var(--warning-gradient); color: white;">
+                                    <h5 class="modal-title">
+                                        <i class="fas fa-edit me-2"></i>
+                                        Alterar Status - Pedido #{{ order.id }}
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form action="{{ url_for('admin.update_order_status', order_id=order.id) }}" method="POST">
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold">Status Atual:</label>
+                                            <div>
+                                                {% if order.status == 'recebido' %}
+                                                    <span class="badge bg-info fs-6">
+                                                        <i class="fas fa-inbox me-1"></i>{{ order.status|title }}
+                                                    </span>
+                                                {% elif order.status == 'em_preparo' %}
+                                                    <span class="badge bg-warning fs-6">
+                                                        <i class="fas fa-utensils me-1"></i>Em Preparo
+                                                    </span>
+                                                {% elif order.status == 'pronto' %}
+                                                    <span class="badge bg-success fs-6">
+                                                        <i class="fas fa-check-circle me-1"></i>{{ order.status|title }}
+                                                    </span>
+                                                {% elif order.status == 'entregue' %}
+                                                    <span class="badge bg-secondary fs-6">
+                                                        <i class="fas fa-truck me-1"></i>{{ order.status|title }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-danger fs-6">
+                                                        <i class="fas fa-times-circle me-1"></i>{{ order.status|title }}
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="status{{ order.id }}" class="form-label fw-semibold">Novo Status:</label>
+                                            <select class="form-select" id="status{{ order.id }}" name="status" required>
+                                                <option value="recebido" {% if order.status == 'recebido' %}selected{% endif %}>
+                                                    📥 Recebido
+                                                </option>
+                                                <option value="em_preparo" {% if order.status == 'em_preparo' %}selected{% endif %}>
+                                                    👨‍🍳 Em Preparo
+                                                </option>
+                                                <option value="pronto" {% if order.status == 'pronto' %}selected{% endif %}>
+                                                    ✅ Pronto
+                                                </option>
+                                                <option value="entregue" {% if order.status == 'entregue' %}selected{% endif %}>
+                                                    🚚 Entregue
+                                                </option>
+                                                <option value="cancelado" {% if order.status == 'cancelado' %}selected{% endif %}>
+                                                    ❌ Cancelado
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                            <i class="fas fa-times me-1"></i>Cancelar
+                                        </button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-1"></i>Salvar Alteração
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-shopping-bag text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+            <h5 class="text-muted mt-3">Nenhum pedido encontrado</h5>
+            <p class="text-muted">
+                {% if status_filter != 'all' or period_filter != 'all' %}
+                    Tente ajustar os filtros para ver mais pedidos.
+                {% else %}
+                    Quando houver pedidos, eles aparecerão aqui.
+                {% endif %}
+            </p>
+            <a href="{{ url_for('admin.orders', status='all', period='all') }}" class="btn btn-primary">
+                <i class="fas fa-refresh me-2"></i>Ver Todos os Pedidos
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-refresh da página a cada 30 segundos para pedidos em tempo real
+    setInterval(function() {
+        if (document.visibilityState === 'visible') {
+            // Só atualiza se a página estiver visível
+            const currentUrl = window.location.href;
+            if (currentUrl.includes('orders')) {
+                location.reload();
+            }
+        }
+    }, 30000);
+
+    // Notificação sonora para novos pedidos (opcional)
+    let lastOrderCount = {{ total_orders }};
+    
+    function checkNewOrders() {
+        // Esta função pode ser expandida para verificar novos pedidos via AJAX
+        // e tocar um som de notificação
+    }
+
+    // Adicionar animações aos modais
+    document.addEventListener('DOMContentLoaded', function() {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            modal.addEventListener('show.bs.modal', function() {
+                this.querySelector('.modal-dialog').style.transform = 'scale(0.8)';
+                this.querySelector('.modal-dialog').style.opacity = '0';
+                
+                setTimeout(() => {
+                    this.querySelector('.modal-dialog').style.transition = 'all 0.3s ease';
+                    this.querySelector('.modal-dialog').style.transform = 'scale(1)';
+                    this.querySelector('.modal-dialog').style.opacity = '1';
+                }, 10);
+            });
+        });
+    });
+</script>
+{% endblock %}
+

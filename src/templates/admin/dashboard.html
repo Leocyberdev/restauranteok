@@ -1,0 +1,376 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dashboard - RestaurantePro{% endblock %}
+{% block header %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Métricas Principais -->
+<div class="row g-4 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card h-100">
+            <div class="card-body position-relative">
+                <div class="stat-label">Pedidos Hoje</div>
+                <div class="stat-value" data-is-currency="false">{{ orders_today }}</div>
+                <div class="text-muted small">
+                    <i class="fas fa-arrow-up text-success me-1"></i>
+                    +12% vs ontem
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-shopping-bag"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card success h-100">
+            <div class="card-body position-relative">
+                <div class="stat-label">Vendas Hoje</div>
+                <div class="stat-value" data-is-currency="true">R$ {{ "%.2f"|format(sales_today) }}</div>
+                <div class="text-muted small">
+                    <i class="fas fa-arrow-up text-success me-1"></i>
+                    +8% vs ontem
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card warning h-100">
+            <div class="card-body position-relative">
+                <div class="stat-label">Pedidos Pendentes</div>
+                <div class="stat-value" data-is-currency="false">{{ pending_orders }}</div>
+                <div class="text-muted small">
+                    <i class="fas fa-clock text-warning me-1"></i>
+                    Aguardando preparo
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-hourglass-half"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card info h-100">
+            <div class="card-body position-relative">
+                <div class="stat-label">Pedidos da Semana</div>
+                <div class="stat-value" data-is-currency="false">{{ orders_week }}</div>
+                <div class="text-muted small">
+                    <i class="fas fa-calendar text-info me-1"></i>
+                    Últimos 7 dias
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-week"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Métricas Financeiras -->
+<div class="row g-4 mb-4">
+    <div class="col-xl-4 col-md-6">
+        <div class="card stat-card success h-100">
+            <div class="card-body position-relative">
+                <div class="stat-label">Vendas do Mês</div>
+                <div class="stat-value">R$ {{ "%.2f"|format(sales_month) }}</div>
+                <div class="text-muted small">
+                    <i class="fas fa-trend-up text-success me-1"></i>
+                    Meta: R$ {{ "%.2f"|format(sales_month * 1.2) }}
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-md-6">
+        <div class="card stat-card danger h-100">
+            <div class="card-body position-relative">
+                <div class="stat-label">Despesas Mensais</div>
+                <div class="stat-value">R$ {{ "%.2f"|format(monthly_expenses) }}</div>
+                <div class="text-muted small">
+                    <i class="fas fa-arrow-down text-danger me-1"></i>
+                    Últimos 30 dias
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-md-6">
+        <div class="card stat-card danger h-100">
+            <div class="card-body position-relative">
+                <div class="stat-label">Custo dos Produtos Vendidos</div>
+                <div class="stat-value">R$ {{ "%.2f"|format(estimated_product_cost) }}</div>
+                <div class="text-muted small">
+                    <i class="fas fa-arrow-down text-danger me-1"></i>
+                    Custo dos produtos no mês
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-boxes"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-md-12">
+        <div class="card stat-card {% if final_balance >= 0 %}success{% else %}danger{% endif %} h-100">
+            <div class="card-body position-relative">
+                <div class="stat-label">Saldo Final</div>
+                <div class="stat-value">R$ {{ "%.2f"|format(final_balance) }}</div>
+                <div class="text-muted small">
+                    <i class="fas fa-{% if final_balance >= 0 %}arrow-up text-success{% else %}arrow-down text-danger{% endif %} me-1"></i>
+                    {% if final_balance >= 0 %}Lucro{% else %}Prejuízo{% endif %} mensal
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-{% if final_balance >= 0 %}chart-line{% else %}chart-line-down{% endif %}"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Seção de Análises -->
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="table-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6><i class="fas fa-trophy text-warning me-2"></i>Produtos Mais Vendidos</h6>
+                <span class="badge bg-primary">Top 5</span>
+            </div>
+            <div class="card-body p-0">
+                {% if top_products %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Posição</th>
+                                    <th>Produto</th>
+                                    <th>Quantidade</th>
+                                    <th>Tendência</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in top_products[:5] %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="badge bg-gradient-primary rounded-pill me-2">{{ loop.index }}</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-light rounded-circle me-3 d-flex align-items-center justify-content-center">
+                                                <i class="fas fa-utensils text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">{{ product.name }}</div>
+                                                <div class="text-muted small">Produto popular</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold">{{ product.total_sold }}</span>
+                                        <div class="text-muted small">unidades</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-arrow-up me-1"></i>+{{ (loop.index * 5) }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-chart-bar text-muted" style="font-size: 3rem; opacity: 0.3;"></i>
+                        <p class="text-muted mt-3">Nenhum produto vendido ainda.</p>
+                        <a href="{{ url_for('admin.products') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Adicionar Produtos
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="table-card h-100">
+            <div class="card-header">
+                <h6><i class="fas fa-chart-pie text-success me-2"></i>Resumo Financeiro</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="position-relative d-inline-block">
+                        <canvas id="financialChart" width="120" height="120"></canvas>
+                        <div class="position-absolute top-50 start-50 translate-middle text-center">
+                            <div class="h4 mb-0 text-success">
+                                {% if (sales_month + monthly_expenses) > 0 %}
+                                    {{ "%.0f"|format((sales_month / (sales_month + monthly_expenses)) * 100) }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">Margem</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3">
+                            <div>
+                                <div class="text-muted small">Receita Total</div>
+                                <div class="fw-semibold text-success">R$ {{ "%.2f"|format(sales_month) }}</div>
+                            </div>
+                            <div class="text-success">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-3">
+                            <div>
+                                <div class="text-muted small">Despesas Totais</div>
+                                <div class="fw-semibold text-danger">R$ {{ "%.2f"|format(monthly_expenses) }}</div>
+                            </div>
+                            <div class="text-danger">
+                                <i class="fas fa-arrow-down"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-primary bg-opacity-10 rounded-3">
+                            <div>
+                                <div class="text-muted small">Lucro Líquido</div>
+                                <div class="fw-bold text-primary">R$ {{ "%.2f"|format(final_balance) }}</div>
+                            </div>
+                            <div class="text-primary">
+                                <i class="fas fa-{% if final_balance >= 0 %}chart-line{% else %}chart-line-down{% endif %}"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ações Rápidas -->
+<div class="row g-4 mt-2">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title mb-4">
+                    <i class="fas fa-bolt text-warning me-2"></i>Ações Rápidas
+                </h6>
+                <div class="row g-3">
+                    <div class="col-md-3 col-sm-6">
+                        <a href="{{ url_for('admin.orders') }}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="fas fa-shopping-bag d-block mb-2" style="font-size: 1.5rem;"></i>
+                            Ver Pedidos
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <a href="{{ url_for('admin.products') }}" class="btn btn-outline-success w-100 py-3">
+                            <i class="fas fa-plus-circle d-block mb-2" style="font-size: 1.5rem;"></i>
+                            Novo Produto
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <a href="{{ url_for('admin.expenses') }}" class="btn btn-outline-danger w-100 py-3">
+                            <i class="fas fa-receipt d-block mb-2" style="font-size: 1.5rem;"></i>
+                            Registrar Despesa
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <a href="{{ url_for('admin.promotions') }}" class="btn btn-outline-warning w-100 py-3">
+                            <i class="fas fa-percent d-block mb-2" style="font-size: 1.5rem;"></i>
+                            Nova Promoção
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Gráfico financeiro
+    const ctx = document.getElementById('financialChart').getContext('2d');
+    const salesValue = {{ sales_month }};
+    const expensesValue = {{ monthly_expenses }};
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Receitas', 'Despesas'],
+            datasets: [{
+                data: [salesValue, expensesValue],
+                backgroundColor: [
+                    'rgba(79, 172, 254, 0.8)',
+                    'rgba(250, 112, 154, 0.8)'
+                ],
+                borderColor: [
+                    '#4facfe',
+                    '#fa709a'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: false,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            cutout: '70%'
+        }
+    });
+
+    // Animação apenas para contadores numéricos (não monetários)
+    function animateCounter(element, target) {
+        const start = 0;
+        const duration = 2000;
+        const increment = target / (duration / 16);
+        let current = start;
+        
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            element.textContent = Math.floor(current).toLocaleString('pt-BR');
+        }, 16);
+    }
+
+    // Inicializar animações apenas para contagens (não monetários)
+    document.addEventListener('DOMContentLoaded', function() {
+        const counters = document.querySelectorAll('.stat-value[data-is-currency="false"]');
+        counters.forEach(counter => {
+            const target = parseInt(counter.textContent.replace(/[^0-9]/g, ''));
+            if (!isNaN(target)) {
+                counter.textContent = '0';
+                setTimeout(() => animateCounter(counter, target), 500);
+            }
+        });
+    });
+</script>
+{% endblock %}

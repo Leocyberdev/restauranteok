@@ -1,0 +1,184 @@
+{% extends "client/base.html" %}
+
+{% block title %}Acompanhar Pedido - Restaurante{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="text-center mb-5">
+                <h1>Pedido #{{ order.id }}</h1>
+                <p class="text-muted">Acompanhe o status do seu pedido em tempo real</p>
+            </div>
+            
+            <!-- Order Status -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Status Atual</h5>
+                            {% if order.status == 'recebido' %}
+                                <span class="badge bg-info fs-6">
+                                    <i class="fas fa-clock me-1"></i>Pedido Recebido
+                                </span>
+                            {% elif order.status == 'em_preparo' %}
+                                <span class="badge bg-warning fs-6">
+                                    <i class="fas fa-utensils me-1"></i>Em Preparo
+                                </span>
+                            {% elif order.status == 'pronto' %}
+                                <span class="badge bg-primary fs-6">
+                                    <i class="fas fa-check me-1"></i>Pronto
+                                </span>
+                            {% elif order.status == 'saiu_para_entrega' %}
+                                <span class="badge bg-info fs-6">
+                                    <i class="fas fa-truck me-1"></i>Saiu para Entrega
+                                </span>
+                            {% elif order.status == 'entregue' %}
+                                <span class="badge bg-success fs-6">
+                                    <i class="fas fa-check-circle me-1"></i>Entregue
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger fs-6">
+                                    <i class="fas fa-times me-1"></i>{{ order.status }}
+                                </span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Tempo Estimado</h5>
+                            {% if order.status not in ['entregue', 'cancelado'] %}
+                                <p class="mb-0">{{ order.estimated_time }} minutos</p>
+                            {% else %}
+                                <p class="mb-0">-</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="progress-container">
+                        <div class="d-flex justify-content-between mb-2">
+                            <small class="text-muted">Recebido</small>
+                            <small class="text-muted">Preparo</small>
+                            <small class="text-muted">Pronto</small>
+                            {% if order.delivery_type == 'entrega' %}
+                            <small class="text-muted">Entrega</small>
+                            {% endif %}
+                            <small class="text-muted">Concluído</small>
+                        </div>
+                        
+                        {% set progress = 0 %}
+                        {% if order.status == 'recebido' %}
+                            {% set progress = 20 %}
+                        {% elif order.status == 'em_preparo' %}
+                            {% set progress = 40 %}
+                        {% elif order.status == 'pronto' %}
+                            {% set progress = 60 %}
+                        {% elif order.status == 'saiu_para_entrega' %}
+                            {% set progress = 80 %}
+                        {% elif order.status == 'entregue' %}
+                            {% set progress = 100 %}
+                        {% endif %}
+                        
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                 style="width: {{ progress }}%" aria-valuenow="{{ progress }}" 
+                                 aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Order Details -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Detalhes do Pedido</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Data do Pedido:</strong><br>
+                            {{ order.created_at.strftime('%d/%m/%Y às %H:%M') }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Tipo:</strong><br>
+                            {% if order.delivery_type == 'entrega' %}
+                                <i class="fas fa-truck me-1"></i>Entrega
+                            {% else %}
+                                <i class="fas fa-store me-1"></i>Retirada
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if order.delivery_address %}
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <strong>Endereço de Entrega:</strong><br>
+                            {{ order.delivery_address }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Forma de Pagamento:</strong><br>
+                            {% if order.payment_method == 'dinheiro' %}
+                                <i class="fas fa-money-bill me-1"></i>Dinheiro
+                            {% elif order.payment_method == 'cartao' %}
+                                <i class="fas fa-credit-card me-1"></i>Cartão
+                            {% elif order.payment_method == 'pix' %}
+                                <i class="fas fa-qrcode me-1"></i>PIX
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Total:</strong><br>
+                            <span class="h5 text-primary">R$ {{ "%.2f"|format(order.total_amount) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Order Items -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Itens do Pedido</h5>
+                </div>
+                <div class="card-body">
+                    {% for item in order.items %}
+                    <div class="d-flex justify-content-between align-items-center {% if not loop.last %}border-bottom pb-2 mb-2{% endif %}">
+                        <div>
+                            <strong>{{ item.product.name }}</strong><br>
+                            <small class="text-muted">{{ item.quantity }}x R$ {{ "%.2f"|format(item.unit_price) }}</small>
+                        </div>
+                        <div>
+                            <strong>R$ {{ "%.2f"|format(item.quantity * item.unit_price) }}</strong>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <a href="{{ url_for('client.order_history') }}" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-history me-1"></i>Ver Histórico
+                </a>
+                <a href="{{ url_for('client.home') }}" class="btn btn-primary">
+                    <i class="fas fa-home me-1"></i>Voltar ao Início
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-refresh page every 30 seconds to update order status
+setTimeout(function() {
+    location.reload();
+}, 30000);
+</script>
+{% endblock %}
+

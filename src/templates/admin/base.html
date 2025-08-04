@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Painel de Administração{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --info-gradient: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            --dark-bg: #1a1d29;
+            --sidebar-bg: #252836;
+            --card-bg: #ffffff;
+            --text-primary: #2d3748;
+            --text-secondary: #718096;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 2rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header h5 {
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin: 0;
+            text-align: center;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+
+        .nav-item {
+            margin: 0.25rem 1rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.875rem 1.25rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-link:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background: var(--primary-gradient);
+            color: #ffffff;
+            box-shadow: var(--shadow-md);
+        }
+
+        .nav-link i {
+            width: 20px;
+            margin-right: 0.75rem;
+            font-size: 1rem;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        .page-header {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .page-header h1 {
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 2rem;
+            margin: 0;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        .stat-card.success::before {
+            background: var(--success-gradient);
+        }
+
+        .stat-card.warning::before {
+            background: var(--warning-gradient);
+        }
+
+        .stat-card.danger::before {
+            background: var(--danger-gradient);
+        }
+
+        .stat-card.info::before {
+            background: var(--info-gradient);
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0.5rem 0;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-icon {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            font-size: 1.5rem;
+        }
+
+        .stat-card.success .stat-icon {
+            background: rgba(79, 172, 254, 0.1);
+            color: #4facfe;
+        }
+
+        .stat-card.warning .stat-icon {
+            background: rgba(67, 233, 123, 0.1);
+            color: #43e97b;
+        }
+
+        .stat-card.danger .stat-icon {
+            background: rgba(250, 112, 154, 0.1);
+            color: #fa709a;
+        }
+
+        .stat-card.info .stat-icon {
+            background: rgba(168, 237, 234, 0.1);
+            color: #a8edea;
+        }
+
+        .table-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .table-card .card-header {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem 2rem;
+        }
+
+        .table-card .card-header h6 {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .table {
+            margin: 0;
+        }
+
+        .table th {
+            background: transparent;
+            border-top: none;
+            border-bottom: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 1rem 2rem;
+        }
+
+        .table td {
+            border-top: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-weight: 500;
+            padding: 1rem 2rem;
+        }
+
+        .alert {
+            border: none;
+            border-radius: 16px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1565c0;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn {
+            border-radius: 12px;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+            border: none;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .page-header {
+                padding: 1.5rem;
+            }
+
+            .card-body {
+                padding: 1.5rem;
+            }
+
+            .stat-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.25rem;
+            }
+
+            .stat-value {
+                font-size: 2rem;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-in {
+            animation: slideIn 0.8s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar slide-in">
+        <div class="sidebar-header">
+            <h5>🍽️ RestaurantePro</h5>
+        </div>
+        <div class="sidebar-nav">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin.dashboard') }}">
+                        <i class="fas fa-chart-pie"></i>Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin.products') }}">
+                        <i class="fas fa-utensils"></i>Produtos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin.categories') }}">
+                        <i class="fas fa-tags"></i>Categorias
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin.orders') }}">
+                        <i class="fas fa-shopping-bag"></i>Pedidos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin.employees') }}">
+                        <i class="fas fa-users"></i>Funcionários
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin.promotions') }}">
+                        <i class="fas fa-percent"></i>Promoções
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin.expenses') }}">
+                        <i class="fas fa-receipt"></i>Despesas
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin.clients') }}">
+                        <i class="fas fa-user-friends"></i>Clientes
+                    </a>
+                </li>
+                <li class="nav-item" style="margin-top: 2rem;">
+                    <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                        <i class="fas fa-sign-out-alt"></i>Sair
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="main-content">
+        <div class="page-header fade-in">
+            <h1>{% block header %}{% endblock %}</h1>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-info alert-dismissible fade show fade-in" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>{{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="fade-in">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Adicionar classe active ao link atual
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Animação de entrada para os cards
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.classList.add('fade-in');
+            });
+        });
+
+        // Toggle sidebar em mobile
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('show');
+        }
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+

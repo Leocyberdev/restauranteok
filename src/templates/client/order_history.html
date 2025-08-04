@@ -1,0 +1,178 @@
+{% extends "client/base.html" %}
+
+{% block title %}Meus Pedidos - Restaurante{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">
+        <i class="fas fa-history me-2"></i>Meus Pedidos
+    </h1>
+    
+    {% if orders %}
+    <div class="row">
+        {% for order in orders %}
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Pedido #{{ order.id }}</h6>
+                    {% if order.status == 'recebido' %}
+                        <span class="badge bg-info">{{ order.status }}</span>
+                    {% elif order.status == 'em_preparo' %}
+                        <span class="badge bg-warning">{{ order.status }}</span>
+                    {% elif order.status == 'pronto' %}
+                        <span class="badge bg-primary">{{ order.status }}</span>
+                    {% elif order.status == 'saiu_para_entrega' %}
+                        <span class="badge bg-info">{{ order.status }}</span>
+                    {% elif order.status == 'entregue' %}
+                        <span class="badge bg-success">{{ order.status }}</span>
+                    {% else %}
+                        <span class="badge bg-danger">{{ order.status }}</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">Data:</small><br>
+                            {{ order.created_at.strftime('%d/%m/%Y %H:%M') }}
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Total:</small><br>
+                            <strong class="text-primary">R$ {{ "%.2f"|format(order.total_amount) }}</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">Tipo:</small><br>
+                            {% if order.delivery_type == 'entrega' %}
+                                <i class="fas fa-truck me-1"></i>Entrega
+                            {% else %}
+                                <i class="fas fa-store me-1"></i>Retirada
+                            {% endif %}
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Pagamento:</small><br>
+                            {% if order.payment_method == 'dinheiro' %}
+                                <i class="fas fa-money-bill me-1"></i>Dinheiro
+                            {% elif order.payment_method == 'cartao' %}
+                                <i class="fas fa-credit-card me-1"></i>Cartão
+                            {% elif order.payment_method == 'pix' %}
+                                <i class="fas fa-qrcode me-1"></i>PIX
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted">Itens:</small><br>
+                        {% for item in order.items %}
+                            {{ item.quantity }}x {{ item.product.name }}{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        {% if order.status not in ['entregue', 'cancelado'] %}
+                        <a href="{{ url_for('client.order_tracking', order_id=order.id) }}" 
+                           class="btn btn-primary btn-sm">
+                            <i class="fas fa-eye me-1"></i>Acompanhar
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{{ url_for('client.repeat_order', order_id=order.id) }}" 
+                           class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-redo me-1"></i>Repetir Pedido
+                        </a>
+                        
+                        {% if order.status == 'entregue' %}
+                        <button type="button" class="btn btn-outline-warning btn-sm" 
+                                data-bs-toggle="modal" data-bs-target="#reviewModal{{ order.id }}">
+                            <i class="fas fa-star me-1"></i>Avaliar
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal para avaliação -->
+        {% if order.status == 'entregue' %}
+        <div class="modal fade" id="reviewModal{{ order.id }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Avaliar Pedido #{{ order.id }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="mb-3">
+                                <label class="form-label">Avaliação</label>
+                                <div class="rating">
+                                    <input type="radio" name="rating{{ order.id }}" value="5" id="star5-{{ order.id }}">
+                                    <label for="star5-{{ order.id }}">★</label>
+                                    <input type="radio" name="rating{{ order.id }}" value="4" id="star4-{{ order.id }}">
+                                    <label for="star4-{{ order.id }}">★</label>
+                                    <input type="radio" name="rating{{ order.id }}" value="3" id="star3-{{ order.id }}">
+                                    <label for="star3-{{ order.id }}">★</label>
+                                    <input type="radio" name="rating{{ order.id }}" value="2" id="star2-{{ order.id }}">
+                                    <label for="star2-{{ order.id }}">★</label>
+                                    <input type="radio" name="rating{{ order.id }}" value="1" id="star1-{{ order.id }}">
+                                    <label for="star1-{{ order.id }}">★</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="comment{{ order.id }}" class="form-label">Comentário</label>
+                                <textarea class="form-control" id="comment{{ order.id }}" rows="3" 
+                                          placeholder="Conte-nos sobre sua experiência..."></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary">Enviar Avaliação</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-receipt fa-5x text-muted mb-4"></i>
+        <h3>Você ainda não fez nenhum pedido</h3>
+        <p class="text-muted mb-4">Que tal experimentar nossos deliciosos pratos?</p>
+        <a href="{{ url_for('client.menu') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-utensils me-2"></i>Ver Cardápio
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.rating {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+}
+
+.rating input {
+    display: none;
+}
+
+.rating label {
+    font-size: 2rem;
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.rating input:checked ~ label,
+.rating label:hover,
+.rating label:hover ~ label {
+    color: #ffc107;
+}
+</style>
+{% endblock %}
+

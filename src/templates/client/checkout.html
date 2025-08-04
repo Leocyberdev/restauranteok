@@ -1,0 +1,207 @@
+{% extends "client/base.html" %}
+
+{% block title %}Finalizar Pedido - Restaurante{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">
+        <i class="fas fa-credit-card me-2"></i>Finalizar Pedido
+    </h1>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <form method="POST" action="{{ url_for('client.place_order') }}">
+                <!-- Delivery Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Informações de Entrega</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Entrega</label>
+                            <div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="delivery_type" 
+                                           id="delivery" value="entrega" checked onchange="toggleAddress()">
+                                    <label class="form-check-label" for="delivery">
+                                        <i class="fas fa-truck me-1"></i>Entrega
+                                    </label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="delivery_type" 
+                                           id="pickup" value="retirada" onchange="toggleAddress()">
+                                    <label class="form-check-label" for="pickup">
+                                        <i class="fas fa-store me-1"></i>Retirada
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="address-section">
+                            <div class="mb-3">
+                                <label for="delivery_address" class="form-label">Endereço de Entrega</label>
+                                <textarea class="form-control" id="delivery_address" name="delivery_address" 
+                                          rows="3" placeholder="Rua, número, bairro, cidade..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Forma de Pagamento</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="payment_method" 
+                                       id="money" value="dinheiro" checked>
+                                <label class="form-check-label" for="money">
+                                    <i class="fas fa-money-bill me-2"></i>Dinheiro
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="payment_method" 
+                                       id="card" value="cartao">
+                                <label class="form-check-label" for="card">
+                                    <i class="fas fa-credit-card me-2"></i>Cartão (Débito/Crédito)
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="payment_method" 
+                                       id="pix" value="pix">
+                                <label class="form-check-label" for="pix">
+                                    <i class="fas fa-qrcode me-2"></i>PIX
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Coupon -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Cupom de Desconto</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="coupon_code" id="coupon_code" 
+                                   placeholder="Digite o código do cupom">
+                            <button type="button" class="btn btn-outline-secondary" onclick="validateCoupon()">
+                                Aplicar
+                            </button>
+                        </div>
+                        <div id="coupon-message" class="mt-2"></div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-success btn-lg w-100">
+                    <i class="fas fa-check me-2"></i>Confirmar Pedido
+                </button>
+            </form>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Resumo do Pedido</h5>
+                </div>
+                <div class="card-body">
+                    {% for item in cart_items %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{{ item.quantity }}x {{ item.product.name }}</span>
+                        <span>R$ {{ "%.2f"|format(item.total) }}</span>
+                    </div>
+                    {% endfor %}
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">R$ {{ "%.2f"|format(total) }}</span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-2" id="discount-row" style="display: none;">
+                        <span>Desconto:</span>
+                        <span id="discount" class="text-success">-R$ 0,00</span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Taxa de entrega:</span>
+                        <span>Grátis</span>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <span class="h5">Total:</span>
+                        <span class="h5 text-primary" id="final-total">R$ {{ "%.2f"|format(total) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleAddress() {
+    const deliveryType = document.querySelector('input[name="delivery_type"]:checked').value;
+    const addressSection = document.getElementById('address-section');
+    const addressField = document.getElementById('delivery_address');
+    
+    if (deliveryType === 'entrega') {
+        addressSection.style.display = 'block';
+        addressField.required = true;
+    } else {
+        addressSection.style.display = 'none';
+        addressField.required = false;
+        addressField.value = '';
+    }
+}
+
+function validateCoupon() {
+    const couponCode = document.getElementById('coupon_code').value;
+    const total = {{ total }};
+    const messageDiv = document.getElementById('coupon-message');
+    
+    if (!couponCode) {
+        messageDiv.innerHTML = '<div class="alert alert-warning">Digite um código de cupom</div>';
+        return;
+    }
+    
+    fetch('{{ url_for("client.validate_coupon") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            coupon_code: couponCode,
+            total: total
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.valid) {
+            messageDiv.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
+            document.getElementById('discount-row').style.display = 'flex';
+            document.getElementById('discount').textContent = '-R$ ' + data.discount.toFixed(2);
+            document.getElementById('final-total').textContent = 'R$ ' + data.new_total.toFixed(2);
+        } else {
+            messageDiv.innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
+            document.getElementById('discount-row').style.display = 'none';
+            document.getElementById('final-total').textContent = 'R$ ' + total.toFixed(2);
+        }
+    })
+    .catch(error => {
+        messageDiv.innerHTML = '<div class="alert alert-danger">Erro ao validar cupom</div>';
+    });
+}
+
+// Initialize address visibility
+toggleAddress();
+</script>
+{% endblock %}
+

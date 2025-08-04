@@ -1,0 +1,162 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Despesas - Painel de Administração{% endblock %}
+{% block header %}Gerenciar Despesas{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <p class="mb-0">Gerencie as despesas mensais do restaurante.</p>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
+        <i class="fas fa-plus me-2"></i>Adicionar Despesa
+    </button>
+</div>
+
+<div class="card shadow">
+    <div class="card-header">
+        <h6 class="m-0 font-weight-bold text-primary">Lista de Despesas</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Descrição</th>
+                        <th>Valor</th>
+                        <th>Tipo</th>
+                        <th>Data</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in expenses %}
+                    <tr>
+                        <td>{{ expense.description }}</td>
+                        <td>R$ {{ "%.2f"|format(expense.amount) }}</td>
+                        <td>
+                            {% if expense.expense_type == 'rent' %}Aluguel
+                            {% elif expense.expense_type == 'salaries' %}Salários
+                            {% elif expense.expense_type == 'fixed_bills' %}Contas Fixas
+                            {% else %}Outros{% endif %}
+                        </td>
+                        <td>{{ expense.date.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick="editExpense({{ expense.id }}, '{{ expense.description }}', {{ expense.amount }}, '{{ expense.expense_type }}', '{{ expense.date.strftime('%Y-%m-%d') }}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <form method="POST" action="{{ url_for('admin.delete_expense', expense_id=expense.id) }}" style="display: inline;" 
+                                  onsubmit="return confirm('Tem certeza que deseja excluir esta despesa?')">
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center">Nenhuma despesa cadastrada.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Adicionar Despesa -->
+<div class="modal fade" id="addExpenseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adicionar Nova Despesa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.add_expense') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descrição</label>
+                        <input type="text" class="form-control" id="description" name="description" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Valor (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="amount" name="amount" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="expense_type" class="form-label">Tipo</label>
+                        <select class="form-control" id="expense_type" name="expense_type" required>
+                            <option value="">Selecione o tipo</option>
+                            <option value="rent">Aluguel</option>
+                            <option value="salaries">Salários</option>
+                            <option value="fixed_bills">Contas Fixas</option>
+                            <option value="other">Outros</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Data</label>
+                        <input type="date" class="form-control" id="date" name="date" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Adicionar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Editar Despesa -->
+<div class="modal fade" id="editExpenseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Despesa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="editExpenseForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_description" class="form-label">Descrição</label>
+                        <input type="text" class="form-control" id="edit_description" name="description" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_amount" class="form-label">Valor (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="edit_amount" name="amount" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_expense_type" class="form-label">Tipo</label>
+                        <select class="form-control" id="edit_expense_type" name="expense_type" required>
+                            <option value="">Selecione o tipo</option>
+                            <option value="rent">Aluguel</option>
+                            <option value="salaries">Salários</option>
+                            <option value="fixed_bills">Contas Fixas</option>
+                            <option value="other">Outros</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_date" class="form-label">Data</label>
+                        <input type="date" class="form-control" id="edit_date" name="date" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function editExpense(id, description, amount, type, date) {
+    document.getElementById('edit_description').value = description;
+    document.getElementById('edit_amount').value = amount;
+    document.getElementById('edit_expense_type').value = type;
+    document.getElementById('edit_date').value = date;
+    document.getElementById('editExpenseForm').action = '/admin/expenses/edit/' + id;
+    
+    var editModal = new bootstrap.Modal(document.getElementById('editExpenseModal'));
+    editModal.show();
+}
+</script>
+{% endblock %}
+
