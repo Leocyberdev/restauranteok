@@ -90,6 +90,10 @@ from src.models.employee import Employee, TimeRecord
 from src.models.promotion import Promotion, Coupon
 from src.models.expense import Expense
 
+with app.app_context():
+    db.create_all()
+    print("✅ Tabelas criadas com sucesso!")
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
