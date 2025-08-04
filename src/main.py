@@ -109,7 +109,7 @@ with app.app_context():
         db.session.commit()
         print('✅ Usuário admin criado com sucesso!')
     else:
-        print('⚠️ Usuário admin já existe.'))
+        print('⚠️ Usuário admin já existe.')
 
 @login_manager.user_loader
 def load_user(user_id):
