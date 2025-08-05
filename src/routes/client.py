@@ -241,7 +241,12 @@ def checkout():
     total = 0
     
     for product_id, quantity in session["cart"].items():
-        product = Product.query.get(int(product_id))
+        try:
+            product_id_int = int(product_id)
+            product = Product.query.get(product_id_int)
+        except ValueError:
+            flash(f"Produto com ID inválido: {product_id}", "danger")
+            continue
         if product:
             item_total = product.price * quantity
             cart_items.append({
@@ -271,7 +276,12 @@ def place_order():
     order_items = []
     
     for product_id, quantity in session["cart"].items():
-        product = Product.query.get(int(product_id))
+        try:
+            product_id_int = int(product_id)
+            product = Product.query.get(product_id_int)
+        except ValueError:
+            flash(f"Produto com ID inválido: {product_id}", "danger")
+            continue
         if product:
             item_total = product.price * quantity
             total += item_total
