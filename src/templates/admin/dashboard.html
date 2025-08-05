@@ -164,7 +164,7 @@
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <div class="badge bg-primary rounded-pill me-2" style="color: #000000 !important; font-weight: bold !important;">{{ loop.index }}°</div>
+                                            <div class="badge bg-primary rounded-pill me-2" style="color: #000000 !important; font-weight: bold !important;"></div>
                                         </div>
                                     </td>
                                     <td>
@@ -342,7 +342,7 @@
         currentChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: ['Receitas', 'Despesas', 'Custo Produtos', 'Lucro Líquido'],
+                labels: ['Receitas', 'Despesas', 'Custo                labels: ['Receitas', 'Despesas', 'Custo Produtos', 'Lucro Líquido'],
                 datasets: [{
                     data: [data.sales, data.expenses, data.productCost, profitValue],
                     backgroundColor: [
