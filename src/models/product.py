@@ -1,5 +1,4 @@
 
-product.py
 from src.database import db
 
 class Category(db.Model):
