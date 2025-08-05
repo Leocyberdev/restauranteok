@@ -84,10 +84,6 @@
                         <a class="nav-link position-relative" href="{{ url_for('client.cart') }}">
                             <i class="fas fa-shopping-cart"></i> Meu carrinho
                             {% if session.cart %}
-                                <!-- ============================================================================== -->
-                                <!-- LINHA CORRIGIDA -->
-                                <!-- Em vez de somar os dicionários, somamos o atributo 'quantity' de cada um. -->
-                                <!-- ============================================================================== -->
                                 <span class="cart-badge">{{ session.cart.values() | sum(attribute='quantity') }}</span>
                             {% endif %}
                         </a>
@@ -116,6 +112,9 @@
                         {{ message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
+                <!-- ============================================================================== -->
+                <!-- CORREÇÃO FINAL: Trocado o 'endif' incorreto por 'endfor' -->
+                <!-- ============================================================================== -->
                 {% endfor %}
             </div>
         {% endif %}
@@ -142,6 +141,9 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
     {% block scripts %}{% endblock %}
 </body>
 </html>
