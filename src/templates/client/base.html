@@ -105,36 +105,27 @@
 
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages() %}
-    {% if messages %}
-        <div class="container mt-3">
-            {% for message in messages %}
-                <div class="alert alert-info alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}  <!-- DEVE SER 'endfor' -->
-        </div>
-    {% endif %}
-{% endwith %}
-
+        {% if messages %}
+            <div class="container mt-3">
+                {% for message in messages %}
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
 
     <!-- Main Content -->
-    {% block content %}{% endblock %}
+    <div class="container py-4">
+        {% block content %}{% endblock %}
+    </div>
 
     <!-- Footer -->
     <footer class="bg-dark text-white mt-5 py-4">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5>Restaurante</h5>
-                    <p>Deliciosa comida entregue na sua porta!</p>
-                </div>
-                <div class="col-md-6">
-                    <h5>Contato</h5>
-                    <p><i class="fas fa-phone me-2"></i>(11) 1234-5678</p>
-                    <p><i class="fas fa-envelope me-2"></i>contato@restaurante.com</p>
-                </div>
-            </div>
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2025 Restaurante. Todos os direitos reservados.</p>
         </div>
     </footer>
 
