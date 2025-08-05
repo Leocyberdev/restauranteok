@@ -26,29 +26,28 @@
 <div class="row">
     {% if categories %}
         {% for category, product_count in categories %}
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                {{ category.name }}
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ product_count }} Produto(s)</div>
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <!-- Informações da Categoria -->
+                        <div class="flex-grow-1">
+                            <h5 class="card-title font-weight-bold text-dark mb-1">{{ category.name }}</h5>
+                            <p class="card-text text-muted">{{ product_count }} Produto(s)</p>
                         </div>
-                        <div class="col-auto">
-                            <div class="dropdown no-arrow">
-                                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink{{ category.id }}" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        
+                        <!-- Menu Dropdown de Ações -->
+                        <div class="dropdown no-arrow">
+                            <a class="btn btn-sm btn-light" href="#" role="button" id="dropdownMenuLink{{ category.id }}" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-600"></i>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end shadow animated--fade-in" aria-labelledby="dropdownMenuLink{{ category.id }}">
+                                <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editCategoryModal{{ category.id }}">
+                                    <i class="fas fa-edit fa-sm fa-fw me-2 text-gray-400"></i>Editar
                                 </a>
-                                <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink{{ category.id }}">
-                                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editCategoryModal{{ category.id }}">
-                                        <i class="fas fa-edit fa-sm fa-fw me-2 text-gray-400"></i>Editar
-                                    </a>
-                                    <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal{{ category.id }}">
-                                        <i class="fas fa-trash fa-sm fa-fw me-2 text-danger"></i>Excluir
-                                    </a>
-                                </div>
+                                <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal{{ category.id }}">
+                                    <i class="fas fa-trash fa-sm fa-fw me-2"></i>Excluir
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -92,14 +91,14 @@
                         Tem certeza de que deseja excluir a categoria <strong>"{{ category.name }}"</strong>?
                         {% if product_count > 0 %}
                             <div class="alert alert-warning mt-3">
-                                <strong>Atenção:</strong> Esta categoria contém {{ product_count }} produto(s). A exclusão só será permitida se não houver produtos associados.
+                                <strong>Atenção:</strong> Esta categoria contém {{ product_count }} produto(s) e não pode ser excluída.
                             </div>
                         {% endif %}
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <form action="{{ url_for('admin.delete_category', category_id=category.id) }}" method="POST" class="d-inline">
-                            <button type="submit" class="btn btn-danger" {% if product_count > 0 %}disabled{% endif %}>Excluir</button>
+                            <button type="submit" class="btn btn-danger" {% if product_count > 0 %}disabled{% endif %}>Excluir Mesmo Assim</button>
                         </form>
                     </div>
                 </div>
@@ -110,6 +109,7 @@
         <div class="col-12">
             <div class="card shadow mb-4">
                 <div class="card-body text-center">
+                    <i class="fas fa-box-open fa-3x text-gray-400 mb-3"></i>
                     <p class="lead text-gray-800">Nenhuma categoria encontrada.</p>
                     <p>Comece adicionando sua primeira categoria para organizar seus produtos.</p>
                 </div>
