@@ -302,40 +302,69 @@
     const ctx = document.getElementById('financialChart').getContext('2d');
     const salesValue = {{ sales_month }};
     const expensesValue = {{ monthly_expenses }};
+    const productCostValue = {{ estimated_product_cost }};
+    const profitValue = salesValue - expensesValue - productCostValue;
     
     new Chart(ctx, {
-        type: 'doughnut',
+        type: 'bar',
         data: {
-            labels: ['Receitas', 'Despesas'],
+            labels: ['Receitas', 'Despesas', 'Custo Produtos', 'Lucro Líquido'],
             datasets: [{
-                data: [salesValue, expensesValue],
+                data: [salesValue, expensesValue, productCostValue, profitValue],
                 backgroundColor: [
                     'rgba(40, 167, 69, 0.8)',
-                    'rgba(220, 53, 69, 0.8)'
+                    'rgba(220, 53, 69, 0.8)',
+                    'rgba(255, 193, 7, 0.8)',
+                    profitValue >= 0 ? 'rgba(0, 123, 255, 0.8)' : 'rgba(220, 53, 69, 0.8)'
                 ],
                 borderColor: [
                     '#28a745',
-                    '#dc3545'
+                    '#dc3545',
+                    '#ffc107',
+                    profitValue >= 0 ? '#007bff' : '#dc3545'
                 ],
                 borderWidth: 2
             }]
         },
         options: {
-            responsive: false,
+            indexAxis: 'y',
+            responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: true,
-                    position: 'bottom',
-                    labels: {
-                        usePointStyle: true,
-                        font: {
-                            size: 14
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.x.toLocaleString('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL'
+                            });
                         }
                     }
                 }
             },
-            cutout: '70%'
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL'
+                            });
+                        }
+                    }
+                },
+                y: {
+                    ticks: {
+                        font: {
+                            size: 12
+                        }
+                    }
+                }
+            }
         }
     });
 
