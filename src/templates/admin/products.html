@@ -51,40 +51,14 @@
                         </form>
                     </td>
                     <td>
-                        {# O botão de Editar sempre aparece #}
                         <a href="{{ url_for("admin.edit_product", product_id=product.id) }}" class="btn btn-sm btn-icon btn-warning-outline" title="Editar">
                             <i class="fas fa-edit"></i>
                         </a>
-
-                        {# --- INÍCIO DA ALTERAÇÃO --- #}
-                        {# O botão de Excluir SÓ APARECE SE o ID do produto NÃO ESTIVER na lista de produtos vendidos #}
                         {% if product.id not in sold_product_ids %}
                         <button type="button" class="btn btn-sm btn-icon btn-danger-outline" data-bs-toggle="modal" data-bs-target="#deleteProductModal{{ product.id }}" title="Excluir">
                             <i class="fas fa-trash"></i>
                         </button>
-
-                        <!-- Modal de Confirmação de Exclusão (agora dentro do IF) -->
-                        <div class="modal fade" id="deleteProductModal{{ product.id }}" tabindex="-1" aria-labelledby="deleteProductModalLabel{{ product.id }}" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="deleteProductModalLabel{{ product.id }}">Confirmar Exclusão</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        Tem certeza de que deseja excluir o produto "{{ product.name }}"?
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                        <form action="{{ url_for("admin.delete_product", product_id=product.id) }}" method="POST" style="display:inline;">
-                                            <button type="submit" class="btn btn-danger">Excluir</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                         {% endif %}
-                        {# --- FIM DA ALTERAÇÃO --- #}
                     </td>
                 </tr>
                 {% endfor %}
@@ -93,7 +67,35 @@
     </div>
 </div>
 
-<!-- Modal para adicionar produto -->
+{# --- INÍCIO DA CORREÇÃO --- #}
+{# DEFINIÇÃO DE TODOS OS MODAIS DE EXCLUSÃO FORA DA TABELA #}
+{% for product in products %}
+    {% if product.id not in sold_product_ids %}
+    <div class="modal fade" id="deleteProductModal{{ product.id }}" tabindex="-1" aria-labelledby="deleteProductModalLabel{{ product.id }}" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteProductModalLabel{{ product.id }}">Confirmar Exclusão</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Tem certeza de que deseja excluir o produto "{{ product.name }}"?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form action="{{ url_for("admin.delete_product", product_id=product.id) }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-danger">Excluir</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endfor %}
+{# --- FIM DA CORREÇÃO --- #}
+
+
+<!-- Modal para adicionar produto (já estava correto) -->
 <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content card-modern">
@@ -139,253 +141,37 @@
 </div>
 
 <style>
-/* Estilos gerais para cards e botões */
-.card-modern {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border-radius: 24px;
-    padding: 2rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    margin-bottom: 2rem;
-}
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #e2e8f0;
-}
-
-.section-header h2 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #2d3748;
-    margin: 0;
-}
-
-.btn {
-    border-radius: 12px;
-    font-weight: 600;
-    padding: 0.75rem 1.5rem;
-    transition: all 0.3s ease;
-    border: none;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-size: 0.875rem;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
-    color: white;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(118, 75, 162, 0.4);
-}
-
-.btn-warning-outline {
-    background: transparent;
-    border: 2px solid #ffc107;
-    color: #ffc107;
-}
-
-.btn-warning-outline:hover {
-    background: #ffc107;
-    color: white;
-}
-
-.btn-danger-outline {
-    background: transparent;
-    border: 2px solid #dc3545;
-    color: #dc3545;
-}
-
-.btn-danger-outline:hover {
-    background: #dc3545;
-    color: white;
-}
-
-.btn-success-outline {
-    background: transparent;
-    border: 2px solid #28a745;
-    color: #28a745;
-}
-
-.btn-success-outline:hover {
-    background: #28a745;
-    color: white;
-}
-
-.btn-secondary-outline {
-    background: transparent;
-    border: 2px solid #6c757d;
-    color: #6c757d;
-}
-
-.btn-secondary-outline:hover {
-    background: #6c757d;
-    color: white;
-}
-
-.btn-icon {
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    font-size: 1rem;
-}
-
-/* Estilos da Tabela */
-.table-products {
-    border-collapse: separate;
-    border-spacing: 0 10px; /* Espaçamento entre as linhas */
-}
-
-.table-products thead th {
-    background: linear-gradient(135deg, #e2e8f0 0%, #f8fafc 100%);
-    border-bottom: none;
-    padding: 1rem 1.5rem;
-    color: #2d3748;
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
-}
-
-.table-products tbody tr {
-    background: #ffffff;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease;
-}
-
-.table-products tbody tr:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-.table-products tbody td {
-    border-top: none;
-    border-bottom: none;
-    padding: 1rem 1.5rem;
-    vertical-align: middle;
-    color: #4a5568;
-    font-weight: 500;
-}
-
-.table-products tbody tr:first-child td {
-    border-top-left-radius: 15px;
-    border-top-right-radius: 15px;
-}
-
-.table-products tbody tr:last-child td {
-    border-bottom-left-radius: 15px;
-    border-bottom-right-radius: 15px;
-}
-
-.product-name-cell {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-weight: 600;
-    color: #2d3748;
-}
-
-.product-icon-small {
-    color: #667eea;
-    font-size: 1.1rem;
-}
-
-.badge.bg-category {
-    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-    color: #2d3748;
-    padding: 0.5em 0.8em;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 0.75rem;
-}
-
-/* Estilos do Modal */
-.modal-content.card-modern {
-    padding: 0;
-}
-
-.modal-header.section-header {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding: 1.5rem 2rem;
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    border-top-left-radius: 24px;
-    border-top-right-radius: 24px;
-}
-
-.modal-header .modal-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #2d3748;
-}
-
-.modal-body {
-    padding: 2rem;
-}
-
-.modal-footer {
-    padding: 1.5rem 2rem;
-    border-top: 1px solid #e2e8f0;
-    background: #f8fafc;
-    border-bottom-left-radius: 24px;
-    border-bottom-right-radius: 24px;
-}
-
-/* Responsividade */
-@media (max-width: 768px) {
-    .card-modern {
-        padding: 1rem;
-    }
-
-    .section-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-
-    .section-header h2 {
-        font-size: 1.2rem;
-    }
-
-    .btn {
-        width: 100%;
-        padding: 0.6rem 1rem;
-    }
-
-    .table-products thead th,
-    .table-products tbody td {
-        padding: 0.75rem 1rem;
-        font-size: 0.8rem;
-    }
-
-    .product-name-cell {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.25rem;
-    }
-
-    .product-icon-small {
-        font-size: 1rem;
-    }
-
-    .btn-icon {
-        width: 35px;
-        height: 35px;
-        font-size: 0.9rem;
-    }
-}
+/* Seus estilos permanecem os mesmos */
+.card-modern { background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border-radius: 24px; padding: 2rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); margin-bottom: 2rem; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #e2e8f0; }
+.section-header h2 { font-size: 1.5rem; font-weight: 700; color: #2d3748; margin: 0; }
+.btn { border-radius: 12px; font-weight: 600; padding: 0.75rem 1.5rem; transition: all 0.3s ease; border: none; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.875rem; }
+.btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3); color: white; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(118, 75, 162, 0.4); }
+.btn-warning-outline { background: transparent; border: 2px solid #ffc107; color: #ffc107; }
+.btn-warning-outline:hover { background: #ffc107; color: white; }
+.btn-danger-outline { background: transparent; border: 2px solid #dc3545; color: #dc3545; }
+.btn-danger-outline:hover { background: #dc3545; color: white; }
+.btn-success-outline { background: transparent; border: 2px solid #28a745; color: #28a745; }
+.btn-success-outline:hover { background: #28a745; color: white; }
+.btn-secondary-outline { background: transparent; border: 2px solid #6c757d; color: #6c757d; }
+.btn-secondary-outline:hover { background: #6c757d; color: white; }
+.btn-icon { width: 40px; height: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 1rem; }
+.table-products { border-collapse: separate; border-spacing: 0 10px; }
+.table-products thead th { background: linear-gradient(135deg, #e2e8f0 0%, #f8fafc 100%); border-bottom: none; padding: 1rem 1.5rem; color: #2d3748; font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px; }
+.table-products tbody tr { background: #ffffff; border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); transition: all 0.3s ease; }
+.table-products tbody tr:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); }
+.table-products tbody td { border-top: none; border-bottom: none; padding: 1rem 1.5rem; vertical-align: middle; color: #4a5568; font-weight: 500; }
+.table-products tbody tr:first-child td { border-top-left-radius: 15px; border-top-right-radius: 15px; }
+.table-products tbody tr:last-child td { border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; }
+.product-name-cell { display: flex; align-items: center; gap: 0.75rem; font-weight: 600; color: #2d3748; }
+.product-icon-small { color: #667eea; font-size: 1.1rem; }
+.badge.bg-category { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #2d3748; padding: 0.5em 0.8em; border-radius: 10px; font-weight: 600; font-size: 0.75rem; }
+.modal-content.card-modern { padding: 0; }
+.modal-header.section-header { border-bottom: none; margin-bottom: 0; padding: 1.5rem 2rem; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-top-left-radius: 24px; border-top-right-radius: 24px; }
+.modal-header .modal-title { font-size: 1.5rem; font-weight: 700; color: #2d3748; }
+.modal-body { padding: 2rem; }
+.modal-footer { padding: 1.5rem 2rem; border-top: 1px solid #e2e8f0; background: #f8fafc; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; }
+@media (max-width: 768px) { .card-modern { padding: 1rem; } .section-header { flex-direction: column; align-items: flex-start; gap: 1rem; } .section-header h2 { font-size: 1.2rem; } .btn { width: 100%; padding: 0.6rem 1rem; } .table-products thead th, .table-products tbody td { padding: 0.75rem 1rem; font-size: 0.8rem; } .product-name-cell { flex-direction: column; align-items: flex-start; gap: 0.25rem; } .product-icon-small { font-size: 1rem; } .btn-icon { width: 35px; height: 35px; font-size: 0.9rem; } }
 </style>
 {% endblock %}
