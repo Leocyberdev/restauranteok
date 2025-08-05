@@ -36,15 +36,16 @@
                             <p class="card-text text-muted">{{ product_count }} Produto(s)</p>
                         </div>
                         
-                        <!-- Menu Dropdown de Ações -->
+                        <!-- CORREÇÃO AQUI: Menu Dropdown de Ações -->
                         <div class="dropdown no-arrow">
                             <a class="btn btn-sm btn-light" href="#" role="button" id="dropdownMenuLink{{ category.id }}" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-600"></i>
+                                <i class="fas fa-ellipsis-h fa-sm fa-fw text-gray-600"></i>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end shadow animated--fade-in" aria-labelledby="dropdownMenuLink{{ category.id }}">
                                 <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editCategoryModal{{ category.id }}">
                                     <i class="fas fa-edit fa-sm fa-fw me-2 text-gray-400"></i>Editar
                                 </a>
+                                <div class="dropdown-divider"></div>
                                 <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal{{ category.id }}">
                                     <i class="fas fa-trash fa-sm fa-fw me-2"></i>Excluir
                                 </a>
@@ -98,7 +99,7 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <form action="{{ url_for('admin.delete_category', category_id=category.id) }}" method="POST" class="d-inline">
-                            <button type="submit" class="btn btn-danger" {% if product_count > 0 %}disabled{% endif %}>Excluir Mesmo Assim</button>
+                            <button type="submit" class="btn btn-danger" {% if product_count > 0 %}disabled{% endif %}>Excluir</button>
                         </form>
                     </div>
                 </div>
