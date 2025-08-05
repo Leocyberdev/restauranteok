@@ -16,7 +16,7 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 @admin_bp.before_request
 def require_admin():
     if not current_user.is_authenticated or not current_user.is_admin:
-        flash("Acesso negado. Apenas administradores podem acessar esta área.")
+        flash("Acesso negado. Apenas administradores podem acessar esta área.", "warning")
         return redirect(url_for("auth.login"))
 
 @admin_bp.route("/dashboard")
@@ -57,9 +57,8 @@ def dashboard():
 
     
     # Cálculo do lucro líquido estimado (vendas - custos dos produtos)
-    # Busca todos os itens vendidos com seus custos
     profit_query = db.session.query(
-    func.sum((Product.price - func.coalesce(Product.cost, 0)) * OrderItem.quantity).label("estimated_profit")
+        func.sum((Product.price - func.coalesce(Product.cost, 0)) * OrderItem.quantity).label("estimated_profit")
     ).select_from(OrderItem).join(Product).join(Order).filter(
         Order.created_at >= month_ago_utc, 
         Order.status != 'cancelado'
@@ -81,7 +80,6 @@ def dashboard():
     ).scalar() or 0
 
     # Saldo final do mês (receita - despesa - custo dos produtos)
-    # Receita é a sales_month já calculada
     final_balance = sales_month - monthly_expenses - estimated_product_cost
     
     return render_template("admin/dashboard.html",
@@ -95,6 +93,7 @@ def dashboard():
                          monthly_expenses=monthly_expenses,
                          final_balance=final_balance,
                          estimated_product_cost=estimated_product_cost)
+
 @admin_bp.route("/products")
 @login_required
 def products():
@@ -116,7 +115,7 @@ def add_product():
     db.session.add(product)
     db.session.commit()
     
-    flash("Produto adicionado com sucesso!")
+    flash("Produto adicionado com sucesso!", "success")
     return redirect(url_for("admin.products"))
 
 @admin_bp.route("/products/edit/<int:product_id>", methods=["GET", "POST"])
@@ -132,7 +131,7 @@ def edit_product(product_id):
         product.cost = float(cost) if cost else None
         product.category_id = int(request.form.get("category_id"))
         db.session.commit()
-        flash("Produto atualizado com sucesso!")
+        flash("Produto atualizado com sucesso!", "success")
         return redirect(url_for("admin.products"))
     return render_template("admin/edit_product.html", product=product, categories=categories)
 
@@ -142,15 +141,8 @@ def delete_product(product_id):
     product = Product.query.get_or_404(product_id)
     db.session.delete(product)
     db.session.commit()
-    flash("Produto excluído com sucesso!")
+    flash("Produto excluído com sucesso!", "success")
     return redirect(url_for("admin.products"))
-
-@admin_bp.route("/categories")
-@login_required
-def categories():
-    categories = Category.query.all()
-    return render_template("admin/categories.html", categories=categories)
-
 
 @admin_bp.route("/products/<int:product_id>/toggle", methods=["POST"])
 @login_required
@@ -161,29 +153,58 @@ def toggle_product_availability(product_id):
     flash(f"Disponibilidade do produto '{product.name}' atualizada para {'disponível' if product.is_available else 'indisponível'}.", "success")
     return redirect(url_for("admin.products"))
 
+# --- SEÇÃO DE CATEGORIAS ATUALIZADA ---
+
+@admin_bp.route("/categories")
+@login_required
+def categories():
+    # A consulta agora inclui o número de produtos para evitar acessos repetidos no template
+    categories_with_counts = db.session.query(
+        Category, func.count(Product.id).label("product_count")
+    ).outerjoin(Product, Category.id == Product.category_id).group_by(Category.id).order_by(Category.name).all()
+    return render_template("admin/categories.html", categories=categories_with_counts)
 
 @admin_bp.route("/categories/add", methods=["POST"])
 @login_required
 def add_category():
     name = request.form.get("name")
+    if not name:
+        flash("O nome da categoria é obrigatório.", "danger")
+        return redirect(url_for("admin.categories"))
     
+    # Verifica se a categoria já existe (ignorando maiúsculas/minúsculas)
+    existing_category = Category.query.filter(func.lower(Category.name) == func.lower(name)).first()
+    if existing_category:
+        flash(f"A categoria '{name}' já existe.", "warning")
+        return redirect(url_for("admin.categories"))
+
     category = Category(name=name)
     db.session.add(category)
     db.session.commit()
     
-    flash("Categoria adicionada com sucesso!")
+    flash("Categoria adicionada com sucesso!", "success")
     return redirect(url_for("admin.categories"))
 
-@admin_bp.route("/categories/edit/<int:category_id>", methods=["GET", "POST"])
+@admin_bp.route("/categories/edit/<int:category_id>", methods=["POST"])
 @login_required
 def edit_category(category_id):
     category = Category.query.get_or_404(category_id)
-    if request.method == "POST":
-        category.name = request.form.get("name")
-        db.session.commit()
-        flash("Categoria atualizada com sucesso!")
+    new_name = request.form.get("name")
+
+    if not new_name:
+        flash("O nome da categoria não pode ser vazio.", "danger")
         return redirect(url_for("admin.categories"))
-    return render_template("admin/edit_category.html", category=category)
+
+    # Verifica se o novo nome já pertence a outra categoria
+    existing_category = Category.query.filter(func.lower(Category.name) == func.lower(new_name), Category.id != category_id).first()
+    if existing_category:
+        flash(f"O nome '{new_name}' já está em uso por outra categoria.", "warning")
+        return redirect(url_for("admin.categories"))
+
+    category.name = new_name
+    db.session.commit()
+    flash("Categoria atualizada com sucesso!", "success")
+    return redirect(url_for("admin.categories"))
 
 @admin_bp.route("/categories/delete/<int:category_id>", methods=["POST"])
 @login_required
@@ -200,20 +221,19 @@ def delete_category(category_id):
     flash("Categoria excluída com sucesso!", "success")
     return redirect(url_for("admin.categories"))
 
+# --- FIM DA SEÇÃO DE CATEGORIAS ATUALIZADA ---
+
 @admin_bp.route("/orders")
 @login_required
 def orders():
     status_filter = request.args.get("status", "all")
     period_filter = request.args.get("period", "all")
     
-    # Configurar timezone do Brasil
     brazil_tz = pytz.timezone("America/Sao_Paulo")
     now_brazil = datetime.now(brazil_tz)
     
-    # Construir query base
     query = Order.query
     
-    # Aplicar filtro de período
     if period_filter == "today":
         today_start_utc = now_brazil.replace(hour=0, minute=0, second=0, microsecond=0).astimezone(pytz.utc)
         today_end_utc = now_brazil.replace(hour=23, minute=59, second=59, microsecond=999999).astimezone(pytz.utc)
@@ -227,17 +247,14 @@ def orders():
         month_start_utc = month_start.astimezone(pytz.utc)
         query = query.filter(Order.created_at >= month_start_utc)
     
-    # Aplicar filtro de status
     if status_filter != "all":
         query = query.filter_by(status=status_filter)
     
-    # Executar query e ordenar por data
     orders = query.order_by(Order.created_at.desc()).all()
     
-    # Calcular estatísticas para o período selecionado
     total_orders = len(orders)
     total_revenue = sum(order.total_amount for order in orders if order.status != 'cancelado')
-    pending_orders = len([order for order in orders if order.status in ['recebido', 'em_preparo']])
+    pending_orders_count = len([order for order in orders if order.status in ['recebido', 'em_preparo']])
     
     return render_template("admin/orders.html", 
                          orders=orders, 
@@ -245,7 +262,7 @@ def orders():
                          period_filter=period_filter,
                          total_orders=total_orders,
                          total_revenue=total_revenue,
-                         pending_orders=pending_orders)
+                         pending_orders=pending_orders_count)
 
 @admin_bp.route("/orders/<int:order_id>/update_status", methods=["POST"])
 @login_required
@@ -256,7 +273,7 @@ def update_order_status(order_id):
     order.status = new_status
     db.session.commit()
     
-    flash(f"Status do pedido #{order_id} atualizado para {new_status}")
+    flash(f"Status do pedido #{order_id} atualizado para {new_status}", "success")
     return redirect(url_for("admin.orders"))
 
 @admin_bp.route("/employees")
@@ -277,7 +294,7 @@ def add_employee():
     db.session.add(employee)
     db.session.commit()
     
-    flash("Funcionário adicionado com sucesso!")
+    flash("Funcionário adicionado com sucesso!", "success")
     return redirect(url_for("admin.employees"))
 
 @admin_bp.route("/employees/edit/<int:employee_id>", methods=["GET", "POST"])
@@ -289,9 +306,9 @@ def edit_employee(employee_id):
         employee.email = request.form.get("email")
         employee.phone = request.form.get("phone")
         employee.role = request.form.get("role")
-        employee.is_active = bool(request.form.get("is_active"))
+        employee.is_active = 'is_active' in request.form
         db.session.commit()
-        flash("Funcionário atualizado com sucesso!")
+        flash("Funcionário atualizado com sucesso!", "success")
         return redirect(url_for("admin.employees"))
     return render_template("admin/edit_employee.html", employee=employee)
 
@@ -301,7 +318,7 @@ def delete_employee(employee_id):
     employee = Employee.query.get_or_404(employee_id)
     db.session.delete(employee)
     db.session.commit()
-    flash("Funcionário excluído com sucesso!")
+    flash("Funcionário excluído com sucesso!", "success")
     return redirect(url_for("admin.employees"))
 
 @admin_bp.route("/promotions")
@@ -332,7 +349,7 @@ def add_promotion():
     db.session.add(promotion)
     db.session.commit()
     
-    flash("Promoção adicionada com sucesso!")
+    flash("Promoção adicionada com sucesso!", "success")
     return redirect(url_for("admin.promotions"))
 
 @admin_bp.route("/promotions/edit/<int:promotion_id>", methods=["GET", "POST"])
@@ -346,9 +363,9 @@ def edit_promotion(promotion_id):
         promotion.discount_value = float(request.form.get("discount_value"))
         promotion.start_date = datetime.strptime(request.form.get("start_date"), "%Y-%m-%d")
         promotion.end_date = datetime.strptime(request.form.get("end_date"), "%Y-%m-%d")
-        promotion.is_active = bool(request.form.get("is_active"))
+        promotion.is_active = 'is_active' in request.form
         db.session.commit()
-        flash("Promoção atualizada com sucesso!")
+        flash("Promoção atualizada com sucesso!", "success")
         return redirect(url_for("admin.promotions"))
     return render_template("admin/edit_promotion.html", promotion=promotion)
 
@@ -358,7 +375,7 @@ def delete_promotion(promotion_id):
     promotion = Promotion.query.get_or_404(promotion_id)
     db.session.delete(promotion)
     db.session.commit()
-    flash("Promoção excluída com sucesso!")
+    flash("Promoção excluída com sucesso!", "success")
     return redirect(url_for("admin.promotions"))
 
 @admin_bp.route("/coupons/add", methods=["POST"])
@@ -384,7 +401,7 @@ def add_coupon():
     db.session.add(coupon)
     db.session.commit()
     
-    flash("Cupom adicionado com sucesso!")
+    flash("Cupom adicionado com sucesso!", "success")
     return redirect(url_for("admin.promotions"))
 
 @admin_bp.route("/coupons/edit/<int:coupon_id>", methods=["GET", "POST"])
@@ -399,9 +416,9 @@ def edit_coupon(coupon_id):
         coupon.usage_limit = int(request.form.get("usage_limit"))
         coupon.start_date = datetime.strptime(request.form.get("start_date"), "%Y-%m-%d")
         coupon.end_date = datetime.strptime(request.form.get("end_date"), "%Y-%m-%d")
-        coupon.is_active = bool(request.form.get("is_active"))
+        coupon.is_active = 'is_active' in request.form
         db.session.commit()
-        flash("Cupom atualizado com sucesso!")
+        flash("Cupom atualizado com sucesso!", "success")
         return redirect(url_for("admin.promotions"))
     return render_template("admin/edit_coupon.html", coupon=coupon)
 
@@ -411,23 +428,14 @@ def delete_coupon(coupon_id):
     coupon = Coupon.query.get_or_404(coupon_id)
     db.session.delete(coupon)
     db.session.commit()
-    flash("Cupom excluído com sucesso!")
+    flash("Cupom excluído com sucesso!", "success")
     return redirect(url_for("admin.promotions"))
-
-
-
-
-
 
 @admin_bp.route("/clients")
 @login_required
 def clients():
     clients = User.query.filter_by(is_admin=False).all()
     return render_template("admin/clients.html", clients=clients)
-
-
-
-
 
 @admin_bp.route("/expenses")
 @login_required
@@ -447,7 +455,7 @@ def add_expense():
     expense = Expense(description=description, amount=amount, expense_type=expense_type, date=date)
     db.session.add(expense)
     db.session.commit()
-    flash("Despesa adicionada com sucesso!")
+    flash("Despesa adicionada com sucesso!", "success")
     return redirect(url_for("admin.expenses"))
 
 @admin_bp.route("/expenses/edit/<int:expense_id>", methods=["GET", "POST"])
@@ -461,7 +469,7 @@ def edit_expense(expense_id):
         date_str = request.form.get("date")
         expense.date = datetime.strptime(date_str, "%Y-%m-%d") if date_str else datetime.utcnow()
         db.session.commit()
-        flash("Despesa atualizada com sucesso!")
+        flash("Despesa atualizada com sucesso!", "success")
         return redirect(url_for("admin.expenses"))
     return render_template("admin/edit_expense.html", expense=expense)
 
@@ -471,8 +479,5 @@ def delete_expense(expense_id):
     expense = Expense.query.get_or_404(expense_id)
     db.session.delete(expense)
     db.session.commit()
-    flash("Despesa excluída com sucesso!")
+    flash("Despesa excluída com sucesso!", "success")
     return redirect(url_for("admin.expenses"))
-
-
-
