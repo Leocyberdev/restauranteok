@@ -102,6 +102,8 @@ def create_app():
 
     return app
 
+app = create_app()
+
 # ==============================================================================
 # CORREÇÃO 4: PROTEGER A EXECUÇÃO DO APP
 # Este bloco só é executado quando você roda "python src/main.py" diretamente.
