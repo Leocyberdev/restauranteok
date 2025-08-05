@@ -1,5 +1,4 @@
 
-main.py
 import os
 import sys
 from flask import Flask, send_from_directory, redirect, url_for
