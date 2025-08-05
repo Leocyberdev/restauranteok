@@ -5,19 +5,19 @@
 
 {% block content %}
 <div class="row mb-4">
-    <div class="col-6">
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPromotionModal">
+    <div class="col-md-6 mb-2 mb-md-0">
+        <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#addPromotionModal">
             <i class="fas fa-plus me-2"></i>Adicionar Promoção
         </button>
     </div>
-    <div class="col-6">
-        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCouponModal">
+    <div class="col-md-6">
+        <button type="button" class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#addCouponModal">
             <i class="fas fa-plus me-2"></i>Adicionar Cupom
         </button>
     </div>
 </div>
 
-<!-- Promoções -->
+<!-- Tabela de Promoções -->
 <div class="card shadow mb-4">
     <div class="card-header py-3">
         <h6 class="m-0 font-weight-bold text-primary">Promoções</h6>
@@ -29,11 +29,9 @@
                     <tr>
                         <th>ID</th>
                         <th>Nome</th>
-                        <th>Descrição</th>
                         <th>Tipo</th>
                         <th>Valor</th>
-                        <th>Início</th>
-                        <th>Fim</th>
+                        <th>Período</th>
                         <th>Status</th>
                         <th>Ações</th>
                     </tr>
@@ -43,7 +41,6 @@
                     <tr>
                         <td>{{ promotion.id }}</td>
                         <td>{{ promotion.name }}</td>
-                        <td>{{ promotion.description or '-' }}</td>
                         <td>{{ promotion.discount_type }}</td>
                         <td>
                             {% if promotion.discount_type == 'percentage' %}
@@ -52,8 +49,7 @@
                                 R$ {{ "%.2f"|format(promotion.discount_value) }}
                             {% endif %}
                         </td>
-                        <td>{{ promotion.start_date.strftime('%d/%m/%Y') }}</td>
-                        <td>{{ promotion.end_date.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ promotion.start_date.strftime('%d/%m/%y') }} - {{ promotion.end_date.strftime('%d/%m/%y') }}</td>
                         <td>
                             {% if promotion.is_active %}
                                 <span class="badge bg-success">Ativa</span>
@@ -68,27 +64,6 @@
                             <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deletePromotionModal{{ promotion.id }}">
                                 <i class="fas fa-trash"></i>
                             </button>
-
-                            <!-- Modal de Confirmação de Exclusão -->
-                            <div class="modal fade" id="deletePromotionModal{{ promotion.id }}" tabindex="-1" aria-labelledby="deletePromotionModalLabel{{ promotion.id }}" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="deletePromotionModalLabel{{ promotion.id }}">Confirmar Exclusão</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            Tem certeza de que deseja excluir a promoção "{{ promotion.name }}"?
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                            <form action="{{ url_for("admin.delete_promotion", promotion_id=promotion.id) }}" method="POST" style="display:inline;">
-                                                <button type="submit" class="btn btn-danger">Excluir</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -98,7 +73,7 @@
     </div>
 </div>
 
-<!-- Cupons -->
+<!-- Tabela de Cupons -->
 <div class="card shadow">
     <div class="card-header py-3">
         <h6 class="m-0 font-weight-bold text-success">Cupons</h6>
@@ -112,11 +87,8 @@
                         <th>Código</th>
                         <th>Tipo</th>
                         <th>Valor</th>
-                        <th>Valor Mín.</th>
-                        <th>Limite</th>
-                        <th>Usado</th>
-                        <th>Início</th>
-                        <th>Fim</th>
+                        <th>Uso</th>
+                        <th>Período</th>
                         <th>Status</th>
                         <th>Ações</th>
                     </tr>
@@ -134,11 +106,8 @@
                                 R$ {{ "%.2f"|format(coupon.discount_value) }}
                             {% endif %}
                         </td>
-                        <td>R$ {{ "%.2f"|format(coupon.min_order_value) }}</td>
-                        <td>{{ coupon.usage_limit }}</td>
-                        <td>{{ coupon.used_count }}</td>
-                        <td>{{ coupon.start_date.strftime('%d/%m/%Y') }}</td>
-                        <td>{{ coupon.end_date.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ coupon.used_count }}/{{ coupon.usage_limit }}</td>
+                        <td>{{ coupon.start_date.strftime('%d/%m/%y') }} - {{ coupon.end_date.strftime('%d/%m/%y') }}</td>
                         <td>
                             {% if coupon.is_active %}
                                 <span class="badge bg-success">Ativo</span>
@@ -153,27 +122,6 @@
                             <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteCouponModal{{ coupon.id }}">
                                 <i class="fas fa-trash"></i>
                             </button>
-
-                            <!-- Modal de Confirmação de Exclusão -->
-                            <div class="modal fade" id="deleteCouponModal{{ coupon.id }}" tabindex="-1" aria-labelledby="deleteCouponModalLabel{{ coupon.id }}" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="deleteCouponModalLabel{{ coupon.id }}">Confirmar Exclusão</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            Tem certeza de que deseja excluir o cupom "{{ coupon.code }}"?
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                            <form action="{{ url_for("admin.delete_coupon", coupon_id=coupon.id) }}" method="POST" style="display:inline;">
-                                                <button type="submit" class="btn btn-danger">Excluir</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -183,9 +131,59 @@
     </div>
 </div>
 
+{# ================================================================== #}
+{# == INÍCIO DA SEÇÃO CORRIGIDA: DEFINIÇÃO DE TODOS OS MODAIS AQUI == #}
+{# ================================================================== #}
+
+<!-- Modais de Exclusão para Promoções -->
+{% for promotion in promotions %}
+<div class="modal fade" id="deletePromotionModal{{ promotion.id }}" tabindex="-1" aria-labelledby="deletePromotionModalLabel{{ promotion.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deletePromotionModalLabel{{ promotion.id }}">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Tem certeza de que deseja excluir a promoção "{{ promotion.name }}"?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="{{ url_for("admin.delete_promotion", promotion_id=promotion.id) }}" method="POST" style="display:inline;">
+                    <button type="submit" class="btn btn-danger">Excluir</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Modais de Exclusão para Cupons -->
+{% for coupon in coupons %}
+<div class="modal fade" id="deleteCouponModal{{ coupon.id }}" tabindex="-1" aria-labelledby="deleteCouponModalLabel{{ coupon.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteCouponModalLabel{{ coupon.id }}">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Tem certeza de que deseja excluir o cupom "{{ coupon.code }}"?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="{{ url_for("admin.delete_coupon", coupon_id=coupon.id) }}" method="POST" style="display:inline;">
+                    <button type="submit" class="btn btn-danger">Excluir</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
 <!-- Modal para adicionar promoção -->
 <div class="modal fade" id="addPromotionModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Adicionar Promoção</h5>
@@ -193,32 +191,15 @@
             </div>
             <form method="POST" action="{{ url_for("admin.add_promotion") }}">
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Nome</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
+                    <div class="mb-3"><label for="name" class="form-label">Nome</label><input type="text" class="form-control" name="name" required></div>
+                    <div class="mb-3"><label for="description" class="form-label">Descrição</label><textarea class="form-control" name="description" rows="2"></textarea></div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label for="discount_type" class="form-label">Tipo de Desconto</label><select class="form-control" name="discount_type" required><option value="percentage">Porcentagem</option><option value="fixed">Valor Fixo</option></select></div>
+                        <div class="col-md-6 mb-3"><label for="discount_value" class="form-label">Valor do Desconto</label><input type="number" step="0.01" class="form-control" name="discount_value" required></div>
                     </div>
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Descrição</label>
-                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="discount_type" class="form-label">Tipo de Desconto</label>
-                        <select class="form-control" id="discount_type" name="discount_type" required>
-                            <option value="percentage">Porcentagem</option>
-                            <option value="fixed">Valor Fixo</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="discount_value" class="form-label">Valor do Desconto</label>
-                        <input type="number" step="0.01" class="form-control" id="discount_value" name="discount_value" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="start_date" class="form-label">Data de Início</label>
-                        <input type="date" class="form-control" id="start_date" name="start_date" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="end_date" class="form-label">Data de Fim</label>
-                        <input type="date" class="form-control" id="end_date" name="end_date" required>
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label for="start_date_promo" class="form-label">Data de Início</label><input type="date" class="form-control" name="start_date" required></div>
+                        <div class="col-md-6 mb-3"><label for="end_date_promo" class="form-label">Data de Fim</label><input type="date" class="form-control" name="end_date" required></div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -232,7 +213,7 @@
 
 <!-- Modal para adicionar cupom -->
 <div class="modal fade" id="addCouponModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Adicionar Cupom</h5>
@@ -240,36 +221,18 @@
             </div>
             <form method="POST" action="{{ url_for("admin.add_coupon") }}">
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="code" class="form-label">Código</label>
-                        <input type="text" class="form-control" id="code" name="code" required>
+                    <div class="mb-3"><label for="code" class="form-label">Código</label><input type="text" class="form-control" name="code" required></div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label for="discount_type_coupon" class="form-label">Tipo de Desconto</label><select class="form-control" name="discount_type" required><option value="percentage">Porcentagem</option><option value="fixed">Valor Fixo</option></select></div>
+                        <div class="col-md-6 mb-3"><label for="discount_value_coupon" class="form-label">Valor do Desconto</label><input type="number" step="0.01" class="form-control" name="discount_value" required></div>
                     </div>
-                    <div class="mb-3">
-                        <label for="discount_type" class="form-label">Tipo de Desconto</label>
-                        <select class="form-control" id="discount_type" name="discount_type" required>
-                            <option value="percentage">Porcentagem</option>
-                            <option value="fixed">Valor Fixo</option>
-                        </select>
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label for="min_order_value" class="form-label">Valor Mínimo do Pedido</label><input type="number" step="0.01" class="form-control" name="min_order_value" value="0"></div>
+                        <div class="col-md-6 mb-3"><label for="usage_limit" class="form-label">Limite de Uso</label><input type="number" class="form-control" name="usage_limit" value="1"></div>
                     </div>
-                    <div class="mb-3">
-                        <label for="discount_value" class="form-label">Valor do Desconto</label>
-                        <input type="number" step="0.01" class="form-control" id="discount_value" name="discount_value" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="min_order_value" class="form-label">Valor Mínimo do Pedido</label>
-                        <input type="number" step="0.01" class="form-control" id="min_order_value" name="min_order_value" value="0">
-                    </div>
-                    <div class="mb-3">
-                        <label for="usage_limit" class="form-label">Limite de Uso</label>
-                        <input type="number" class="form-control" id="usage_limit" name="usage_limit" value="1">
-                    </div>
-                    <div class="mb-3">
-                        <label for="start_date" class="form-label">Data de Início</label>
-                        <input type="date" class="form-control" id="start_date" name="start_date" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="end_date" class="form-label">Data de Fim</label>
-                        <input type="date" class="form-control" id="end_date" name="end_date" required>
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label for="start_date_coupon" class="form-label">Data de Início</label><input type="date" class="form-control" name="start_date" required></div>
+                        <div class="col-md-6 mb-3"><label for="end_date_coupon" class="form-label">Data de Fim</label><input type="date" class="form-control" name="end_date" required></div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -281,4 +244,3 @@
     </div>
 </div>
 {% endblock %}
-
