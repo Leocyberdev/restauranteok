@@ -2,9 +2,7 @@
 
 {% block title %}Produtos - RestaurantePro{% endblock %}
 
-
 {% block header %}Gestão de Produtos{% endblock %}
-
 
 {% block content %}
 <div class="section-header mb-4">
@@ -53,14 +51,19 @@
                         </form>
                     </td>
                     <td>
+                        {# O botão de Editar sempre aparece #}
                         <a href="{{ url_for("admin.edit_product", product_id=product.id) }}" class="btn btn-sm btn-icon btn-warning-outline" title="Editar">
                             <i class="fas fa-edit"></i>
                         </a>
+
+                        {# --- INÍCIO DA ALTERAÇÃO --- #}
+                        {# O botão de Excluir SÓ APARECE SE o ID do produto NÃO ESTIVER na lista de produtos vendidos #}
+                        {% if product.id not in sold_product_ids %}
                         <button type="button" class="btn btn-sm btn-icon btn-danger-outline" data-bs-toggle="modal" data-bs-target="#deleteProductModal{{ product.id }}" title="Excluir">
                             <i class="fas fa-trash"></i>
                         </button>
 
-                        <!-- Modal de Confirmação de Exclusão -->
+                        <!-- Modal de Confirmação de Exclusão (agora dentro do IF) -->
                         <div class="modal fade" id="deleteProductModal{{ product.id }}" tabindex="-1" aria-labelledby="deleteProductModalLabel{{ product.id }}" aria-hidden="true">
                             <div class="modal-dialog">
                                 <div class="modal-content">
@@ -80,6 +83,8 @@
                                 </div>
                             </div>
                         </div>
+                        {% endif %}
+                        {# --- FIM DA ALTERAÇÃO --- #}
                     </td>
                 </tr>
                 {% endfor %}
@@ -384,4 +389,3 @@
 }
 </style>
 {% endblock %}
-
