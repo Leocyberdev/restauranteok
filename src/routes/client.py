@@ -1,5 +1,4 @@
 
-client.py
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, session
 from flask_login import login_required, current_user
 from src.models.user import User
@@ -379,4 +378,4 @@ def remove_from_cart_key():
         flash("Item removido do carrinho!", "success")
     return redirect(url_for("client.cart"))
 
-Variação de horário e ingredientes opcionais no projeto - Manus
+
