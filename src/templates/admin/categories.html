@@ -4,85 +4,133 @@
 {% block header %}Gestão de Categorias{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
-            <i class="fas fa-plus me-2"></i>Adicionar Categoria
-        </button>
-    </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Categorias</h1>
+    <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+        <i class="fas fa-plus fa-sm text-white-50 me-2"></i>Adicionar Nova Categoria
+    </button>
 </div>
 
-<div class="card shadow">
-    <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Lista de Categorias</h6>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nome</th>
-                        <th>Produtos</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for category in categories %}
-                    <tr>
-                        <td>{{ category.id }}</td>
-                        <td>{{ category.name }}</td>
-                        <td>{{ category.products|length }}</td>
-                        <td>
-                            <a href="{{ url_for("admin.edit_category", category_id=category.id) }}" class="btn btn-sm btn-warning">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal{{ category.id }}">
-                                <i class="fas fa-trash"></i>
-                            </button>
+<!-- Exibição de Alertas -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
 
-                            <!-- Modal de Confirmação de Exclusão -->
-                            <div class="modal fade" id="deleteCategoryModal{{ category.id }}" tabindex="-1" aria-labelledby="deleteCategoryModalLabel{{ category.id }}" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="deleteCategoryModalLabel{{ category.id }}">Confirmar Exclusão</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            Tem certeza de que deseja excluir a categoria "{{ category.name }}"?
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                            <form action="{{ url_for("admin.delete_category", category_id=category.id) }}" method="POST" style="display:inline;">
-                                                <button type="submit" class="btn btn-danger">Excluir</button>
-                                            </form>
-                                        </div>
-                                    </div>
+<div class="row">
+    {% if categories %}
+        {% for category, product_count in categories %}
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                {{ category.name }}
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ product_count }} Produto(s)</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="dropdown no-arrow">
+                                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink{{ category.id }}" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink{{ category.id }}">
+                                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editCategoryModal{{ category.id }}">
+                                        <i class="fas fa-edit fa-sm fa-fw me-2 text-gray-400"></i>Editar
+                                    </a>
+                                    <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal{{ category.id }}">
+                                        <i class="fas fa-trash fa-sm fa-fw me-2 text-danger"></i>Excluir
+                                    </a>
                                 </div>
                             </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
+
+        <!-- Modal de Edição para cada categoria -->
+        <div class="modal fade" id="editCategoryModal{{ category.id }}" tabindex="-1" aria-labelledby="editCategoryModalLabel{{ category.id }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form action="{{ url_for('admin.edit_category', category_id=category.id) }}" method="POST">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editCategoryModalLabel{{ category.id }}">Editar Categoria</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="name{{ category.id }}" class="form-label">Nome da Categoria</label>
+                                <input type="text" class="form-control" id="name{{ category.id }}" name="name" value="{{ category.name }}" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Exclusão para cada categoria -->
+        <div class="modal fade" id="deleteCategoryModal{{ category.id }}" tabindex="-1" aria-labelledby="deleteCategoryModalLabel{{ category.id }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteCategoryModalLabel{{ category.id }}">Confirmar Exclusão</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Tem certeza de que deseja excluir a categoria <strong>"{{ category.name }}"</strong>?
+                        {% if product_count > 0 %}
+                            <div class="alert alert-warning mt-3">
+                                <strong>Atenção:</strong> Esta categoria contém {{ product_count }} produto(s). A exclusão só será permitida se não houver produtos associados.
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <form action="{{ url_for('admin.delete_category', category_id=category.id) }}" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-danger" {% if product_count > 0 %}disabled{% endif %}>Excluir</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-body text-center">
+                    <p class="lead text-gray-800">Nenhuma categoria encontrada.</p>
+                    <p>Comece adicionando sua primeira categoria para organizar seus produtos.</p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 </div>
 
-<!-- Modal para adicionar categoria -->
-<div class="modal fade" id="addCategoryModal" tabindex="-1">
+<!-- Modal para Adicionar Nova Categoria -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Adicionar Categoria</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST" action="{{ url_for("admin.add_category") }}">
+            <form action="{{ url_for('admin.add_category') }}" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addCategoryModalLabel">Adicionar Nova Categoria</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="name" class="form-label">Nome</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
+                        <label for="name" class="form-label">Nome da Categoria</label>
+                        <input type="text" class="form-control" id="name" name="name" required placeholder="Ex: Bebidas, Lanches, Sobremesas">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -94,4 +142,3 @@
     </div>
 </div>
 {% endblock %}
-
