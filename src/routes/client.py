@@ -18,39 +18,43 @@ def home():
     categories = Category.query.all()
     return render_template("client/home.html", featured_products=featured_products, categories=categories)
 
+# Em seu arquivo de rotas (client_bp)
+
 @client_bp.route("/menu")
 @login_required
 def menu():
+    # Imports e obtenção de data/hora permanecem os mesmos
     from datetime import datetime
-    import calendar
-    
     category_id = request.args.get("category", type=int)
     
-    # Obter dia da semana e horário atual
     current_weekday = datetime.now().weekday()
     weekdays = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
     current_day = weekdays[current_weekday]
     
-    # Obter horário atual (simplificado: antes das 15h = Almoço, depois = Jantar)
     current_hour = datetime.now().hour
     current_time = "Almoço" if current_hour < 15 else "Jantar"
     
+    # A busca inicial de produtos permanece a mesma
     if category_id:
-        products = Product.query.filter_by(category_id=category_id, is_available=True).all()
+        products_query = Product.query.filter_by(category_id=category_id, is_available=True)
     else:
-        products = Product.query.filter_by(is_available=True).all()
+        products_query = Product.query.filter_by(is_available=True)
     
-    # Filtrar produtos disponíveis no horário atual e calcular preços ajustados
-    available_products = []
+    # Usar options(joinedload(...)) é mais eficiente para carregar dados relacionados
+    # e ajuda a evitar o problema de `product.category` ser None.
+    from sqlalchemy.orm import joinedload
+    products = products_query.options(joinedload(Product.category)).all()
+
+    # --- INÍCIO DA CORREÇÃO ---
+
+    processed_products = [] # Renomeado de available_products para maior clareza
     for product in products:
-        # Buscar regras de disponibilidade para este produto
         availabilities = ProductAvailability.query.filter_by(product_id=product.id).all()
         
         is_available_now = True
         price_adjustment = 0
         
         if availabilities:
-            # Se há regras, verificar se alguma se aplica ao momento atual
             is_available_now = False
             for availability in availabilities:
                 if (availability.day_of_week == current_day or availability.day_of_week == "Todos") and \
@@ -60,23 +64,35 @@ def menu():
                     break
         
         if is_available_now:
-            # Buscar ingredientes opcionais do produto
             ingredient_options = IngredientOption.query.filter_by(product_id=product.id).all()
             
-            # Adicionar informações extras ao produto
-            product.current_price = product.price + price_adjustment
-            product.price_adjustment = price_adjustment
-            product.ingredient_options = ingredient_options
-            
-            available_products.append(product)
+            # **A MUDANÇA PRINCIPAL ESTÁ AQUI**
+            # Em vez de modificar 'product', criamos um dicionário com os dados para o template.
+            product_data = {
+                "id": product.id,
+                "name": product.name,
+                "description": product.description,
+                "image_url": product.image_url,
+                "price": product.price,
+                "category": product.category, # O objeto de categoria inteiro é passado
+                "current_price": product.price + price_adjustment,
+                "price_adjustment": price_adjustment,
+                "ingredient_options": ingredient_options
+            }
+            processed_products.append(product_data)
+
+    # --- FIM DA CORREÇÃO ---
     
     categories = Category.query.all()
+    
+    # Passamos a nova lista de dicionários para o template
     return render_template("client/menu.html", 
-                         products=available_products, 
+                         products=processed_products, # A lista corrigida
                          categories=categories, 
                          selected_category=category_id,
                          current_day=current_day,
                          current_time=current_time)
+
 
 @client_bp.route("/add_to_cart", methods=["POST"])
 @login_required
