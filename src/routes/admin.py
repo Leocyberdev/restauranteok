@@ -190,14 +190,14 @@ def edit_category(category_id):
 def delete_category(category_id):
     category = Category.query.get_or_404(category_id)
     
-    # Desvincular produtos desta categoria
-    for product in category.products:
-        product.category_id = None  # Ou defina para uma categoria padrão, ou exclua o produto
-    db.session.commit()
+    # LÓGICA ATUALIZADA: Verifica se existem produtos associados a esta categoria
+    if category.products:
+        flash(f"Não é possível excluir a categoria '{category.name}', pois ela contém produtos. Por favor, mova os produtos para outra categoria antes de excluí-la.", "danger")
+        return redirect(url_for("admin.categories"))
 
     db.session.delete(category)
     db.session.commit()
-    flash("Categoria excluída com sucesso!")
+    flash("Categoria excluída com sucesso!", "success")
     return redirect(url_for("admin.categories"))
 
 @admin_bp.route("/orders")
