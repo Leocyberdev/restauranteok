@@ -120,12 +120,45 @@
         </div>
         {% endfor %}
     {% else %}
-        <!-- Mensagem de nenhuma categoria -->
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-tags fa-3x text-gray-300 mb-3"></i>
+                    <h5 class="text-gray-600">Nenhuma categoria encontrada</h5>
+                    <p class="text-gray-500 mb-4">Comece criando sua primeira categoria de produtos.</p>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                        <i class="fas fa-plus me-2"></i>Criar Primeira Categoria
+                    </button>
+                </div>
+            </div>
+        </div>
     {% endif %}
 </div>
 
-<!-- Modal para Adicionar Nova Categoria (permanece o mesmo) -->
-<div class="modal fade" id="addCategoryModal" tabindex="-1">
-    <!-- ... (código do modal de adicionar) ... -->
+<!-- Modal para Adicionar Nova Categoria -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('admin.add_category') }}" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addCategoryModalLabel">Adicionar Nova Categoria</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="categoryName" class="form-label">Nome da Categoria</label>
+                        <input type="text" class="form-control" id="categoryName" name="name" placeholder="Ex: Pratos Principais, Bebidas, Sobremesas..." required>
+                        <div class="form-text">O nome deve ser único e descritivo.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Salvar Categoria
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock %}
