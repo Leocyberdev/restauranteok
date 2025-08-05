@@ -139,9 +139,21 @@ def edit_product(product_id):
 @login_required
 def delete_product(product_id):
     product = Product.query.get_or_404(product_id)
-    db.session.delete(product)
-    db.session.commit()
-    flash("Produto excluído com sucesso!", "success")
+
+    # Verifica se o produto está em algum item de pedido (order_items)
+    is_in_orders = OrderItem.query.filter_by(product_id=product.id).first()
+
+    if is_in_orders:
+        # Se o produto já foi vendido, não o exclua. Apenas o desative.
+        product.is_available = False
+        db.session.commit()
+        flash(f"O produto '{product.name}' não pode ser excluído porque faz parte de pedidos existentes. Em vez disso, foi marcado como indisponível.", "warning")
+    else:
+        # Se o produto nunca foi vendido, pode ser excluído com segurança.
+        db.session.delete(product)
+        db.session.commit()
+        flash("Produto excluído com sucesso!", "success")
+        
     return redirect(url_for("admin.products"))
 
 @admin_bp.route("/products/<int:product_id>/toggle", methods=["POST"])
