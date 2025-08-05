@@ -49,12 +49,12 @@
                 </div>
 
                 <!-- Mensagens de erro/sucesso -->
-                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% with messages = get_flashed_messages() %}
                     {% if messages %}
                         <div class="alert-container">
-                            {% for category, message in messages %}
-                                <div class="alert {% if category == 'success' %}success{% endif %}">
-                                    <i class="fas {% if category == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+                            {% for message in messages %}
+                                <div class="alert">
+                                    <i class="fas fa-exclamation-circle"></i>
                                     <span>{{ message }}</span>
                                 </div>
                             {% endfor %}
@@ -108,6 +108,218 @@
                     <div class="input-group">
                         <div class="input-wrapper">
                             <i class="fas fa-envelope"></i>
+                            <input type="email" id="register-email" name="email" placeholder="E-mail" required>
+                        </div>
+                    </div>
+                
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <i class="fas fa-phone"></i>
+                            <input type="tel" id="register-phone" name="phone" placeholder="Telefone" required>
+                        </div>
+                        </div>
+
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <i class="fas fa-id-card"></i>
+                            <input type="text" id="register-cpf" name="cpf" placeholder="CPF" required>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="register-password" name="password" placeholder="Senha" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('register-password')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="confirm-password" name="confirm_password" placeholder="Confirmar senha" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('confirm-password')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="password-strength">
+                        <div class="strength-bar">
+                            <div class="strength-fill"></div>
+                        </div>
+                        <span class="strength-text">Força da senha</span>
+                    </div>
+
+                    <button type="submit" class="submit-btn">
+                        <span>Criar conta</span>
+                        <i class="fas fa-user-plus"></i>
+                    </button>
+                </form>
+
+                <!-- Formulário de Reset de Senha -->
+                <form id="reset-form" method="POST" action="{{ url_for('auth.reset_password_request') }}" class="auth-form">
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="reset-email" name="email" placeholder="Digite seu e-mail" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn">
+                        <span>Enviar link de recuperação</span>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+
+                <!-- Navegação entre formulários -->
+                <div class="form-navigation">
+                    <div class="nav-links" id="nav-links">
+                        <span id="switch-text">Não tem uma conta?</span>
+                        <a href="#" id="switch-link" onclick="switchForm('register')">Criar conta</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentForm = 'login';
+
+        function switchForm(formType) {
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            const resetForm = document.getElementById('reset-form');
+            const formTitle = document.getElementById('form-title');
+            const formSubtitle = document.getElementById('form-subtitle');
+            const switchText = document.getElementById('switch-text');
+            const switchLink = document.getElementById('switch-link');
+
+            // Esconder todos os formulários
+            loginForm.classList.remove('active');
+            registerForm.classList.remove('active');
+            resetForm.classList.remove('active');
+
+            if (formType === 'login') {
+                loginForm.classList.add('active');
+                formTitle.textContent = 'Bem-vindo de volta!';
+                formSubtitle.textContent = 'Entre na sua conta para continuar';
+                switchText.textContent = 'Não tem uma conta?';
+                switchLink.textContent = 'Criar conta';
+                switchLink.onclick = () => switchForm('register');
+                currentForm = 'login';
+            } else if (formType === 'register') {
+                registerForm.classList.add('active');
+                formTitle.textContent = 'Criar nova conta';
+                formSubtitle.textContent = 'Junte-se à nossa família gastronômica';
+                switchText.textContent = 'Já tem uma conta?';
+                switchLink.textContent = 'Fazer login';
+                switchLink.onclick = () => switchForm('login');
+                currentForm = 'register';
+            } else if (formType === 'reset') {
+                resetForm.classList.add('active');
+                formTitle.textContent = 'Recuperar senha';
+                formSubtitle.textContent = 'Digite seu e-mail para receber o link de recuperação';
+                switchText.textContent = 'Lembrou da senha?';
+                switchLink.textContent = 'Voltar ao login';
+                switchLink.onclick = () => switchForm('login');
+                currentForm = 'reset';
+            }
+        }
+
+        function showResetForm() {
+            switchForm('reset');
+        }
+
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const button = input.nextElementSibling;
+            const icon = button.querySelector('i');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Validação de força da senha
+        document.getElementById('register-password').addEventListener('input', function() {
+            const password = this.value;
+            const strengthBar = document.querySelector('.strength-fill');
+            const strengthText = document.querySelector('.strength-text');
+            
+            let strength = 0;
+            let text = 'Muito fraca';
+            
+            if (password.length >= 8) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            const percentage = (strength / 5) * 100;
+            strengthBar.style.width = percentage + '%';
+            
+            if (strength <= 1) {
+                text = 'Muito fraca';
+                strengthBar.style.backgroundColor = '#ff4757';
+            } else if (strength <= 2) {
+                text = 'Fraca';
+                strengthBar.style.backgroundColor = '#ffa502';
+            } else if (strength <= 3) {
+                text = 'Média';
+                strengthBar.style.backgroundColor = '#ffb142';
+            } else if (strength <= 4) {
+                text = 'Forte';
+                strengthBar.style.backgroundColor = '#2ed573';
+            } else {
+                text = 'Muito forte';
+                strengthBar.style.backgroundColor = '#1dd1a1';
+            }
+            
+            strengthText.textContent = text;
+        });
+
+        // Validação de confirmação de senha
+        document.getElementById('confirm-password').addEventListener('input', function() {
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = this.value;
+            
+            if (confirmPassword && password !== confirmPassword) {
+                this.setCustomValidity('As senhas não coincidem');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        // Máscara para telefone
+        document.getElementById('register-phone').addEventListener('input', function() {
+            let value = this.value.replace(/\D/g, '');
+            value = value.replace(/(\d{2})(\d)/, '($1) $2');
+            value = value.replace(/(\d{5})(\d)/, '$1-$2');
+            this.value = value;
+        });
+
+        // Máscara para CPF
+        document.getElementById('register-cpf').addEventListener('input', function () {
+            let value = this.value.replace(/\D/g, '');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            this.value = value;
+        });
+
+    </script>
+</body>
+</html>
+
                             <input type="email" id="register-email" name="email" placeholder="E-mail" required>
                         </div>
                     </div>
