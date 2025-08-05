@@ -1,7 +1,9 @@
+
+client.py
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, session
 from flask_login import login_required, current_user
 from src.models.user import User
-from src.models.product import Category, Product
+from src.models.product import Category, Product, ProductAvailability, IngredientOption
 from src.models.order import Order, OrderItem
 from src.models.promotion import Coupon
 from src.database import db
@@ -20,15 +22,62 @@ def home():
 @client_bp.route("/menu")
 @login_required
 def menu():
+    from datetime import datetime
+    import calendar
+    
     category_id = request.args.get("category", type=int)
+    
+    # Obter dia da semana e horário atual
+    current_weekday = datetime.now().weekday()
+    weekdays = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+    current_day = weekdays[current_weekday]
+    
+    # Obter horário atual (simplificado: antes das 15h = Almoço, depois = Jantar)
+    current_hour = datetime.now().hour
+    current_time = "Almoço" if current_hour < 15 else "Jantar"
     
     if category_id:
         products = Product.query.filter_by(category_id=category_id, is_available=True).all()
     else:
         products = Product.query.filter_by(is_available=True).all()
     
+    # Filtrar produtos disponíveis no horário atual e calcular preços ajustados
+    available_products = []
+    for product in products:
+        # Buscar regras de disponibilidade para este produto
+        availabilities = ProductAvailability.query.filter_by(product_id=product.id).all()
+        
+        is_available_now = True
+        price_adjustment = 0
+        
+        if availabilities:
+            # Se há regras, verificar se alguma se aplica ao momento atual
+            is_available_now = False
+            for availability in availabilities:
+                if (availability.day_of_week == current_day or availability.day_of_week == "Todos") and \
+                   (availability.time_of_day == current_time or availability.time_of_day == "Dia Todo"):
+                    is_available_now = True
+                    price_adjustment = availability.price_adjustment
+                    break
+        
+        if is_available_now:
+            # Buscar ingredientes opcionais do produto
+            ingredient_options = IngredientOption.query.filter_by(product_id=product.id).all()
+            
+            # Adicionar informações extras ao produto
+            product.current_price = product.price + price_adjustment
+            product.price_adjustment = price_adjustment
+            product.ingredient_options = ingredient_options
+            
+            available_products.append(product)
+    
     categories = Category.query.all()
-    return render_template("client/menu.html", products=products, categories=categories, selected_category=category_id)
+    return render_template("client/menu.html", 
+                         products=available_products, 
+                         categories=categories, 
+                         selected_category=category_id,
+                         current_day=current_day,
+                         current_time=current_time)
 
 @client_bp.route("/add_to_cart", methods=["POST"])
 @login_required
@@ -36,15 +85,63 @@ def add_to_cart():
     product_id = int(request.form.get("product_id"))
     quantity = int(request.form.get("quantity", 1))
     
+    # Obter ingredientes opcionais selecionados
+    selected_ingredients = request.form.getlist("ingredients")  # Lista de IDs dos ingredientes
+    
     # Inicializar carrinho na sessão se não existir
     if "cart" not in session:
         session["cart"] = {}
     
-    # Adicionar produto ao carrinho
-    if str(product_id) in session["cart"]:
-        session["cart"][str(product_id)] += quantity
+    # Criar uma chave única para o item do carrinho incluindo ingredientes
+    cart_key = f"{product_id}_{'-'.join(sorted(selected_ingredients))}"
+    
+    # Calcular preço total do item com ingredientes
+    product = Product.query.get(product_id)
+    if not product:
+        flash("Produto não encontrado!", "error")
+        return redirect(url_for("client.menu"))
+    
+    # Calcular ajuste de preço por disponibilidade
+    from datetime import datetime
+    current_weekday = datetime.now().weekday()
+    weekdays = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+    current_day = weekdays[current_weekday]
+    current_hour = datetime.now().hour
+    current_time = "Almoço" if current_hour < 15 else "Jantar"
+    
+    price_adjustment = 0
+    availabilities = ProductAvailability.query.filter_by(product_id=product_id).all()
+    for availability in availabilities:
+        if (availability.day_of_week == current_day or availability.day_of_week == "Todos") and \
+           (availability.time_of_day == current_time or availability.time_of_day == "Dia Todo"):
+            price_adjustment = availability.price_adjustment
+            break
+    
+    # Calcular ajuste de preço por ingredientes
+    ingredient_adjustment = 0
+    ingredient_names = []
+    for ingredient_id in selected_ingredients:
+        ingredient = IngredientOption.query.get(int(ingredient_id))
+        if ingredient and ingredient.product_id == product_id:
+            ingredient_adjustment += ingredient.price_adjustment
+            ingredient_names.append(ingredient.name)
+    
+    # Adicionar produto ao carrinho com informações detalhadas
+    cart_item = {
+        "product_id": product_id,
+        "quantity": quantity,
+        "base_price": product.price,
+        "price_adjustment": price_adjustment,
+        "ingredient_adjustment": ingredient_adjustment,
+        "selected_ingredients": selected_ingredients,
+        "ingredient_names": ingredient_names,
+        "final_price": product.price + price_adjustment + ingredient_adjustment
+    }
+    
+    if cart_key in session["cart"]:
+        session["cart"][cart_key]["quantity"] += quantity
     else:
-        session["cart"][str(product_id)] = quantity
+        session["cart"][cart_key] = cart_item
     
     session.modified = True
     flash("Produto adicionado ao carrinho!")
@@ -57,16 +154,39 @@ def cart():
     total = 0
     
     if "cart" in session:
-        for product_id, quantity in session["cart"].items():
-            product = Product.query.get(int(product_id))
-            if product:
-                item_total = product.price * quantity
-                cart_items.append({
-                    "product": product,
-                    "quantity": quantity,
-                    "total": item_total
-                })
-                total += item_total
+        for cart_key, cart_item in session["cart"].items():
+            if isinstance(cart_item, dict):  # Novo formato
+                product = Product.query.get(cart_item["product_id"])
+                if product:
+                    item_total = cart_item["final_price"] * cart_item["quantity"]
+                    cart_items.append({
+                        "cart_key": cart_key,
+                        "product": product,
+                        "quantity": cart_item["quantity"],
+                        "base_price": cart_item["base_price"],
+                        "price_adjustment": cart_item["price_adjustment"],
+                        "ingredient_adjustment": cart_item["ingredient_adjustment"],
+                        "ingredient_names": cart_item["ingredient_names"],
+                        "final_price": cart_item["final_price"],
+                        "total": item_total
+                    })
+                    total += item_total
+            else:  # Formato antigo (compatibilidade)
+                product = Product.query.get(int(cart_key))
+                if product:
+                    item_total = product.price * cart_item
+                    cart_items.append({
+                        "cart_key": cart_key,
+                        "product": product,
+                        "quantity": cart_item,
+                        "base_price": product.price,
+                        "price_adjustment": 0,
+                        "ingredient_adjustment": 0,
+                        "ingredient_names": [],
+                        "final_price": product.price,
+                        "total": item_total
+                    })
+                    total += item_total
     
     return render_template("client/cart.html", cart_items=cart_items, total=total)
 
@@ -248,3 +368,15 @@ def validate_coupon():
         "message": f"Cupom aplicado! Desconto de R$ {discount:.2f}"
     })
 
+
+@client_bp.route("/remove_from_cart_key", methods=["POST"])
+@login_required
+def remove_from_cart_key():
+    cart_key = request.form.get("cart_key")
+    if "cart" in session and cart_key in session["cart"]:
+        del session["cart"][cart_key]
+        session.modified = True
+        flash("Item removido do carrinho!", "success")
+    return redirect(url_for("client.cart"))
+
+Variação de horário e ingredientes opcionais no projeto - Manus
