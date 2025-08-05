@@ -1,3 +1,5 @@
+
+main.py
 import os
 import sys
 from flask import Flask, send_from_directory, redirect, url_for
@@ -32,7 +34,7 @@ def internal_error(e):
 # seu restante de setup abaixo...
 
 
-# DON'T CHANGE THIS !!!
+# DON\'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
@@ -84,18 +86,14 @@ migrate = Migrate(app, db)
 
 # Import models after db is initialized
 from src.models.user import User
-from src.models.product import Category, Product
+from src.models.product import Category, Product, ProductAvailability, IngredientOption
 from src.models.order import Order, OrderItem
 from src.models.employee import Employee, TimeRecord
 from src.models.promotion import Promotion, Coupon
 from src.models.expense import Expense
 
 with app.app_context():
-    db.create_all()
-    print("✅ Tabelas criadas com sucesso!")
-
     # Criação automática do usuário admin
-    from src.models.user import User
     admin_user = User.query.filter_by(username='admin').first()
     if not admin_user:
         admin_user = User(
@@ -148,6 +146,8 @@ app.register_blueprint(client_bp)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+
+
 
 
 
