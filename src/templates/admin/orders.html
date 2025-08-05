@@ -182,7 +182,7 @@
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
-                    <tr class="order-row-highlight">
+                    <tr>
                         <th>Pedido</th>
                         <th>Cliente</th>
                         <th>Valor</th>
@@ -194,7 +194,7 @@
                 </thead>
                 <tbody>
                     {% for order in orders %}
-                    <tr class="order-row-highlight">
+                    <tr>
                         <td>
                             <div class="d-flex align-items-center">
                                 <div class="badge bg-primary rounded-pill me-2">#{{ order.id }}</div>
@@ -374,7 +374,7 @@
                                             <div class="table-responsive">
                                                 <table class="table table-hover mb-0">
                                                     <thead class="table-light">
-                                                        <tr class="order-row-highlight">
+                                                        <tr>
                                                             <th>Produto</th>
                                                             <th>Quantidade</th>
                                                             <th>Preço Unit.</th>
@@ -383,7 +383,7 @@
                                                     </thead>
                                                     <tbody>
                                                         {% for item in order.items %}
-                                                        <tr class="order-row-highlight">
+                                                        <tr>
                                                             <td>
                                                                 <div class="d-flex align-items-center">
                                                                     <div class="avatar-sm bg-primary bg-opacity-10 rounded me-3 d-flex align-items-center justify-content-center">
@@ -408,7 +408,7 @@
                                                         {% endfor %}
                                                     </tbody>
                                                     <tfoot class="table-light">
-                                                        <tr class="order-row-highlight">
+                                                        <tr>
                                                             <th colspan="3" class="text-end">Total:</th>
                                                             <th class="text-success">R$ {{ "%.2f"|format(order.total_amount) }}</th>
                                                         </tr>
