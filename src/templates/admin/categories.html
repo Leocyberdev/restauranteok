@@ -1,97 +1,364 @@
 {% extends "admin/base.html" %}
 
-{% block title %}Categorias - Painel de Administração{% endblock %}
+{% block title %}Categorias - RestaurantePro{% endblock %}
 {% block header %}Gestão de Categorias{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
-            <i class="fas fa-plus me-2"></i>Adicionar Categoria
-        </button>
-    </div>
+<div class="section-header mb-4">
+    <h2><i class="fas fa-tags me-2"></i>Lista de Categorias</h2>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+        <i class="fas fa-plus me-2"></i>Adicionar Categoria
+    </button>
 </div>
 
-<div class="card shadow">
-    <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Lista de Categorias</h6>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nome</th>
-                        <th>Produtos</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for category in categories %}
-                    <tr>
-                        <td>{{ category.id }}</td>
-                        <td>{{ category.name }}</td>
-                        <td>{{ category.products|length }}</td>
-                        <td>
-                            <a href="{{ url_for("admin.edit_category", category_id=category.id) }}" class="btn btn-sm btn-warning">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal{{ category.id }}">
-                                <i class="fas fa-trash"></i>
-                            </button>
+<div class="card-modern">
+    <div class="table-responsive">
+        <table class="table table-hover table-striped table-categories">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Produtos</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for category in categories %}
+                <tr>
+                    <td>{{ category.id }}</td>
+                    <td>
+                        <div class="category-name-cell">
+                            <i class="fas fa-tag category-icon-small"></i>
+                            {{ category.name }}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-products-count">{{ category.products|length }} produtos</span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for("admin.edit_category", category_id=category.id) }}" class="btn btn-sm btn-icon btn-warning-outline" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <button type="button" class="btn btn-sm btn-icon btn-danger-outline" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal{{ category.id }}" title="Excluir">
+                            <i class="fas fa-trash"></i>
+                        </button>
 
-                            <!-- Modal de Confirmação de Exclusão -->
-                            <div class="modal fade" id="deleteCategoryModal{{ category.id }}" tabindex="-1" aria-labelledby="deleteCategoryModalLabel{{ category.id }}" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="deleteCategoryModalLabel{{ category.id }}">Confirmar Exclusão</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            Tem certeza de que deseja excluir a categoria "{{ category.name }}"?
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                            <form action="{{ url_for("admin.delete_category", category_id=category.id) }}" method="POST" style="display:inline;">
-                                                <button type="submit" class="btn btn-danger">Excluir</button>
-                                            </form>
-                                        </div>
+                        <!-- Modal de Confirmação de Exclusão -->
+                        <div class="modal fade" id="deleteCategoryModal{{ category.id }}" tabindex="-1" aria-labelledby="deleteCategoryModalLabel{{ category.id }}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="deleteCategoryModalLabel{{ category.id }}">Confirmar Exclusão</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        Tem certeza de que deseja excluir a categoria "{{ category.name }}"?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                        <form action="{{ url_for("admin.delete_category", category_id=category.id) }}" method="POST" style="display:inline;">
+                                            <button type="submit" class="btn btn-danger">Excluir</button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 
 <!-- Modal para adicionar categoria -->
-<div class="modal fade" id="addCategoryModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Adicionar Categoria</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content card-modern">
+            <div class="modal-header section-header">
+                <h5 class="modal-title" id="addCategoryModalLabel">Adicionar Nova Categoria</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="{{ url_for("admin.add_category") }}">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="name" class="form-label">Nome</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
+                        <label for="name" class="form-label">Nome da Categoria</label>
+                        <input type="text" class="form-control" id="name" name="name" required placeholder="Ex: Bebidas, Pratos Principais, Sobremesas">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Adicionar</button>
+                    <button type="button" class="btn btn-secondary-outline" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Adicionar Categoria</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<style>
+/* Estilos gerais para cards e botões */
+.card-modern {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 24px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 2rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.section-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+}
+
+.btn {
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.875rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(118, 75, 162, 0.4);
+}
+
+.btn-warning-outline {
+    background: transparent;
+    border: 2px solid #ffc107;
+    color: #ffc107;
+}
+
+.btn-warning-outline:hover {
+    background: #ffc107;
+    color: white;
+}
+
+.btn-danger-outline {
+    background: transparent;
+    border: 2px solid #dc3545;
+    color: #dc3545;
+}
+
+.btn-danger-outline:hover {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-secondary-outline {
+    background: transparent;
+    border: 2px solid #6c757d;
+    color: #6c757d;
+}
+
+.btn-secondary-outline:hover {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 1rem;
+}
+
+/* Estilos da Tabela */
+.table-categories {
+    border-collapse: separate;
+    border-spacing: 0 10px; /* Espaçamento entre as linhas */
+}
+
+.table-categories thead th {
+    background: linear-gradient(135deg, #e2e8f0 0%, #f8fafc 100%);
+    border-bottom: none;
+    padding: 1rem 1.5rem;
+    color: #2d3748;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.table-categories tbody tr {
+    background: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.table-categories tbody tr:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.table-categories tbody td {
+    border-top: none;
+    border-bottom: none;
+    padding: 1rem 1.5rem;
+    vertical-align: middle;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.table-categories tbody tr:first-child td {
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+}
+
+.table-categories tbody tr:last-child td {
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+}
+
+.category-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.category-icon-small {
+    color: #667eea;
+    font-size: 1.1rem;
+}
+
+.badge.bg-products-count {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    padding: 0.5em 0.8em;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+/* Estilos do Modal */
+.modal-content.card-modern {
+    padding: 0;
+}
+
+.modal-header.section-header {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding: 1.5rem 2rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+}
+
+.modal-header .modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3748;
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.modal-footer {
+    padding: 1.5rem 2rem;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-bottom-left-radius: 24px;
+    border-bottom-right-radius: 24px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .card-modern {
+        padding: 1rem;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .section-header h2 {
+        font-size: 1.2rem;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 0.6rem 1rem;
+    }
+
+    .table-categories thead th,
+    .table-categories tbody td {
+        padding: 0.75rem 1rem;
+        font-size: 0.8rem;
+    }
+
+    .category-name-cell {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+
+    .category-icon-small {
+        font-size: 1rem;
+    }
+
+    .btn-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Animações */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card-modern {
+    animation: slideInUp 0.6s ease-out;
+}
+
+.table-categories tbody tr {
+    animation: slideInUp 0.6s ease-out;
+}
+
+.table-categories tbody tr:nth-child(1) { animation-delay: 0.1s; }
+.table-categories tbody tr:nth-child(2) { animation-delay: 0.2s; }
+.table-categories tbody tr:nth-child(3) { animation-delay: 0.3s; }
+.table-categories tbody tr:nth-child(4) { animation-delay: 0.4s; }
+.table-categories tbody tr:nth-child(5) { animation-delay: 0.5s; }
+</style>
 {% endblock %}
 
