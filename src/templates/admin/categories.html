@@ -45,7 +45,7 @@
 
                         <!-- Modal de Confirmação de Exclusão -->
                         <div class="modal fade" id="deleteCategoryModal{{ category.id }}" tabindex="-1" aria-labelledby="deleteCategoryModalLabel{{ category.id }}" aria-hidden="true">
-                            <div class="modal-dialog">
+                            <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content">
                                     <div class="modal-header">
                                         <h5 class="modal-title" id="deleteCategoryModalLabel{{ category.id }}">Confirmar Exclusão</h5>
@@ -359,6 +359,17 @@
 .table-categories tbody tr:nth-child(3) { animation-delay: 0.3s; }
 .table-categories tbody tr:nth-child(4) { animation-delay: 0.4s; }
 .table-categories tbody tr:nth-child(5) { animation-delay: 0.5s; }
+
+.modal.fade.show {
+    display: block;
+    background-color: rgba(0, 0, 0, 0.6); /* fundo escurecido */
+    z-index: 1055 !important; /* maior que outros elementos */
+}
+
+.modal-backdrop {
+    z-index: 1050 !important;
+}
+
 </style>
 {% endblock %}
 
