@@ -4,91 +4,185 @@
 {% block header %}Gestão de Categorias{% endblock %}
 
 {% block content %}
-<div class="section-header mb-4">
-    <h2><i class="fas fa-tags me-2"></i>Lista de Categorias</h2>
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
-        <i class="fas fa-plus me-2"></i>Adicionar Categoria
-    </button>
-</div>
+<div class="categories-container">
+    <!-- Header Section -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <i class="fas fa-tags header-icon"></i>
+                <h1>Gestão de Categorias</h1>
+                <p class="header-subtitle">Organize e gerencie as categorias dos seus produtos</p>
+            </div>
+            <button type="button" class="btn-add-category" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                <i class="fas fa-plus"></i>
+                <span>Nova Categoria</span>
+            </button>
+        </div>
+    </div>
 
-<div class="card-modern">
-    <div class="table-responsive">
-        <table class="table table-hover table-striped table-categories">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nome</th>
-                    <th>Produtos</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for category in categories %}
-                <tr>
-                    <td>{{ category.id }}</td>
-                    <td>
-                        <div class="category-name-cell">
-                            <i class="fas fa-tag category-icon-small"></i>
-                            {{ category.name }}
+    <!-- Stats Section -->
+    <div class="stats-section">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-tags"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ categories|length }}</h3>
+                <p>Total de Categorias</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-box"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ categories|sum(attribute='products')|length if categories else 0 }}</h3>
+                <p>Produtos Cadastrados</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ (categories|sum(attribute='products')|length / categories|length)|round(1) if categories else 0 }}</h3>
+                <p>Média por Categoria</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories Grid -->
+    <div class="categories-grid">
+        {% for category in categories %}
+        <div class="category-card" data-category-id="{{ category.id }}">
+            <div class="category-header">
+                <div class="category-icon-wrapper">
+                    <i class="fas fa-tag category-icon"></i>
+                </div>
+                <div class="category-actions">
+                    <button class="action-btn edit-btn" onclick="window.location.href='{{ url_for("admin.edit_category", category_id=category.id) }}'" title="Editar categoria">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="action-btn delete-btn" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal{{ category.id }}" title="Excluir categoria">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="category-content">
+                <h3 class="category-name">{{ category.name }}</h3>
+                <div class="category-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-box-open"></i>
+                        <span>{{ category.products|length }} produtos</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>ID: {{ category.id }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="category-footer">
+                <div class="products-preview">
+                    {% if category.products %}
+                        <span class="products-label">Produtos:</span>
+                        <div class="products-list">
+                            {% for product in category.products[:3] %}
+                                <span class="product-tag">{{ product.name }}</span>
+                            {% endfor %}
+                            {% if category.products|length > 3 %}
+                                <span class="more-products">+{{ category.products|length - 3 }} mais</span>
+                            {% endif %}
                         </div>
-                    </td>
-                    <td>
-                        <span class="badge bg-products-count">{{ category.products|length }} produtos</span>
-                    </td>
-                    <td>
-                        <a href="{{ url_for("admin.edit_category", category_id=category.id) }}" class="btn btn-sm btn-icon btn-warning-outline" title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <button type="button" class="btn btn-sm btn-icon btn-danger-outline" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal{{ category.id }}" title="Excluir">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                    {% else %}
+                        <span class="no-products">Nenhum produto cadastrado</span>
+                    {% endif %}
+                </div>
+            </div>
 
-                        <!-- Modal de Confirmação de Exclusão -->
-                        <div class="modal fade" id="deleteCategoryModal{{ category.id }}" tabindex="-1" aria-labelledby="deleteCategoryModalLabel{{ category.id }}" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="deleteCategoryModalLabel{{ category.id }}">Confirmar Exclusão</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        Tem certeza de que deseja excluir a categoria "{{ category.name }}"?
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                        <form action="{{ url_for("admin.delete_category", category_id=category.id) }}" method="POST" style="display:inline;">
-                                            <button type="submit" class="btn btn-danger">Excluir</button>
-                                        </form>
-                                    </div>
-                                </div>
+            <!-- Modal de Confirmação de Exclusão -->
+            <div class="modal fade" id="deleteCategoryModal{{ category.id }}" tabindex="-1" aria-labelledby="deleteCategoryModalLabel{{ category.id }}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content delete-modal">
+                        <div class="modal-header">
+                            <div class="delete-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
                             </div>
+                            <h5 class="modal-title" id="deleteCategoryModalLabel{{ category.id }}">Confirmar Exclusão</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        <div class="modal-body">
+                            <p>Tem certeza de que deseja excluir a categoria <strong>"{{ category.name }}"</strong>?</p>
+                            {% if category.products %}
+                                <div class="warning-message">
+                                    <i class="fas fa-warning"></i>
+                                    <span>Esta categoria possui {{ category.products|length }} produto(s) associado(s).</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancelar</button>
+                            <form action="{{ url_for("admin.delete_category", category_id=category.id) }}" method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-delete">Excluir Categoria</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Empty State -->
+        {% if not categories %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-tags"></i>
+            </div>
+            <h3>Nenhuma categoria encontrada</h3>
+            <p>Comece criando sua primeira categoria de produtos</p>
+            <button type="button" class="btn-add-category" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                <i class="fas fa-plus"></i>
+                <span>Criar Primeira Categoria</span>
+            </button>
+        </div>
+        {% endif %}
     </div>
 </div>
 
 <!-- Modal para adicionar categoria -->
 <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content card-modern">
-            <div class="modal-header section-header">
-                <h5 class="modal-title" id="addCategoryModalLabel">Adicionar Nova Categoria</h5>
+        <div class="modal-content add-modal">
+            <div class="modal-header">
+                <div class="add-icon">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <h5 class="modal-title" id="addCategoryModalLabel">Nova Categoria</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="{{ url_for("admin.add_category") }}">
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Nome da Categoria</label>
-                        <input type="text" class="form-control" id="name" name="name" required placeholder="Ex: Bebidas, Pratos Principais, Sobremesas">
+                    <div class="form-group">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-tag"></i>
+                            Nome da Categoria
+                        </label>
+                        <input type="text" class="form-control" id="name" name="name" required 
+                               placeholder="Ex: Bebidas, Pratos Principais, Sobremesas..."
+                               autocomplete="off">
+                        <div class="form-hint">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Escolha um nome descritivo e único para a categoria</span>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary-outline" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Adicionar Categoria</button>
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-create">
+                        <i class="fas fa-plus"></i>
+                        Criar Categoria
+                    </button>
                 </div>
             </form>
         </div>
@@ -96,246 +190,640 @@
 </div>
 
 <style>
-/* Estilos gerais para cards e botões */
-.card-modern {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border-radius: 24px;
-    padding: 2rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    margin-bottom: 2rem;
+/* Reset e variáveis CSS */
+:root {
+    --primary-color: #6366f1;
+    --primary-dark: #4f46e5;
+    --secondary-color: #f8fafc;
+    --accent-color: #10b981;
+    --warning-color: #f59e0b;
+    --danger-color: #ef4444;
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --text-light: #9ca3af;
+    --border-color: #e5e7eb;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
 }
 
-.section-header {
+/* Container principal */
+.categories-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+}
+
+/* Header da página */
+.page-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: var(--radius-xl);
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.header-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #e2e8f0;
+    gap: 2rem;
 }
 
-.section-header h2 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #2d3748;
+.header-title {
+    flex: 1;
+}
+
+.header-icon {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.header-title h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem 0;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.header-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
     margin: 0;
-}
-
-.btn {
-    border-radius: 12px;
-    font-weight: 600;
-    padding: 0.75rem 1.5rem;
-    transition: all 0.3s ease;
-    border: none;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-size: 0.875rem;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
-    color: white;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(118, 75, 162, 0.4);
-}
-
-.btn-warning-outline {
-    background: transparent;
-    border: 2px solid #ffc107;
-    color: #ffc107;
-}
-
-.btn-warning-outline:hover {
-    background: #ffc107;
-    color: white;
-}
-
-.btn-danger-outline {
-    background: transparent;
-    border: 2px solid #dc3545;
-    color: #dc3545;
-}
-
-.btn-danger-outline:hover {
-    background: #dc3545;
-    color: white;
-}
-
-.btn-secondary-outline {
-    background: transparent;
-    border: 2px solid #6c757d;
-    color: #6c757d;
-}
-
-.btn-secondary-outline:hover {
-    background: #6c757d;
-    color: white;
-}
-
-.btn-icon {
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    font-size: 1rem;
-}
-
-/* Estilos da Tabela */
-.table-categories {
-    border-collapse: separate;
-    border-spacing: 0 10px; /* Espaçamento entre as linhas */
-}
-
-.table-categories thead th {
-    background: linear-gradient(135deg, #e2e8f0 0%, #f8fafc 100%);
-    border-bottom: none;
-    padding: 1rem 1.5rem;
-    color: #2d3748;
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
-}
-
-.table-categories tbody tr {
-    background: #ffffff;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease;
-}
-
-.table-categories tbody tr:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-.table-categories tbody td {
-    border-top: none;
-    border-bottom: none;
-    padding: 1rem 1.5rem;
-    vertical-align: middle;
-    color: #4a5568;
     font-weight: 500;
 }
 
-.table-categories tbody tr:first-child td {
-    border-top-left-radius: 15px;
-    border-top-right-radius: 15px;
-}
-
-.table-categories tbody tr:last-child td {
-    border-bottom-left-radius: 15px;
-    border-bottom-right-radius: 15px;
-}
-
-.category-name-cell {
+/* Botão adicionar categoria */
+.btn-add-category {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 1rem 2rem;
+    font-weight: 600;
+    font-size: 1rem;
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    font-weight: 600;
-    color: #2d3748;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-md);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.category-icon-small {
-    color: #667eea;
+.btn-add-category:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl);
+    background: linear-gradient(135deg, var(--primary-dark) 0%, #3730a3 100%);
+}
+
+.btn-add-category i {
+    font-size: 1.2rem;
+}
+
+/* Seção de estatísticas */
+.stats-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-xl);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.stat-content h3 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0 0 0.25rem 0;
+}
+
+.stat-content p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Grid de categorias */
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2rem;
+}
+
+/* Card de categoria */
+.category-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.category-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+}
+
+.category-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-xl);
+}
+
+/* Header do card */
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.category-icon-wrapper {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.category-icon {
+    font-size: 1.5rem;
+}
+
+.category-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.edit-btn {
+    background: linear-gradient(135deg, var(--warning-color) 0%, #d97706 100%);
+    color: white;
+}
+
+.edit-btn:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-md);
+}
+
+.delete-btn {
+    background: linear-gradient(135deg, var(--danger-color) 0%, #dc2626 100%);
+    color: white;
+}
+
+.delete-btn:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-md);
+}
+
+/* Conteúdo do card */
+.category-content {
+    margin-bottom: 1.5rem;
+}
+
+.category-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 1rem 0;
+}
+
+.category-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.stat-item i {
+    color: var(--primary-color);
+    width: 16px;
+}
+
+/* Footer do card */
+.category-footer {
+    border-top: 1px solid var(--border-color);
+    padding-top: 1.5rem;
+}
+
+.products-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.products-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.products-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.product-tag {
+    background: linear-gradient(135deg, var(--accent-color) 0%, #059669 100%);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.more-products {
+    background: var(--text-light);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.no-products {
+    color: var(--text-light);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+/* Estado vazio */
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.empty-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--text-light) 0%, #9ca3af 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 2rem;
+    color: white;
+    font-size: 2rem;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 1rem 0;
+}
+
+.empty-state p {
+    color: var(--text-secondary);
+    margin: 0 0 2rem 0;
     font-size: 1.1rem;
 }
 
-.badge.bg-products-count {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+/* Modais */
+.modal-content.delete-modal,
+.modal-content.add-modal {
+    border-radius: var(--radius-xl);
+    border: none;
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-bottom: 1px solid var(--border-color);
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.delete-icon,
+.add-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: white;
-    padding: 0.5em 0.8em;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 1.5rem;
 }
 
-/* Estilos do Modal */
-.modal-content.card-modern {
-    padding: 0;
+.delete-icon {
+    background: linear-gradient(135deg, var(--danger-color) 0%, #dc2626 100%);
 }
 
-.modal-header.section-header {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding: 1.5rem 2rem;
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    border-top-left-radius: 24px;
-    border-top-right-radius: 24px;
+.add-icon {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
 }
 
-.modal-header .modal-title {
+.modal-title {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #2d3748;
+    color: var(--text-primary);
+    margin: 0;
 }
 
 .modal-body {
     padding: 2rem;
 }
 
+.warning-message {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #f59e0b;
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #92400e;
+}
+
+.warning-message i {
+    color: var(--warning-color);
+}
+
+/* Formulário */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
+}
+
+.form-label i {
+    color: var(--primary-color);
+}
+
+.form-control {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.form-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.form-hint i {
+    color: var(--primary-color);
+}
+
+/* Botões do modal */
 .modal-footer {
+    background: var(--secondary-color);
+    border-top: 1px solid var(--border-color);
     padding: 1.5rem 2rem;
-    border-top: 1px solid #e2e8f0;
-    background: #f8fafc;
-    border-bottom-left-radius: 24px;
-    border-bottom-right-radius: 24px;
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-cancel {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 2px solid var(--border-color);
+}
+
+.btn-cancel:hover {
+    background: var(--border-color);
+    color: var(--text-primary);
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, var(--danger-color) 0%, #dc2626 100%);
+    color: white;
+}
+
+.btn-delete:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-create {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+}
+
+.btn-create:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 /* Responsividade */
+@media (max-width: 1200px) {
+    .categories-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+}
+
 @media (max-width: 768px) {
-    .card-modern {
+    .categories-container {
         padding: 1rem;
     }
 
-    .section-header {
+    .page-header {
+        padding: 1.5rem;
+    }
+
+    .header-content {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .header-title h1 {
+        font-size: 2rem;
+    }
+
+    .btn-add-category {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .stats-section {
+        grid-template-columns: 1fr;
+    }
+
+    .categories-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .category-card {
+        padding: 1.5rem;
+    }
+
+    .category-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
     }
 
-    .section-header h2 {
-        font-size: 1.2rem;
+    .category-actions {
+        align-self: flex-end;
+    }
+
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        flex-direction: column;
     }
 
     .btn {
         width: 100%;
-        padding: 0.6rem 1rem;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-title h1 {
+        font-size: 1.5rem;
     }
 
-    .table-categories thead th,
-    .table-categories tbody td {
-        padding: 0.75rem 1rem;
-        font-size: 0.8rem;
-    }
-
-    .category-name-cell {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.25rem;
-    }
-
-    .category-icon-small {
+    .header-subtitle {
         font-size: 1rem;
     }
 
-    .btn-icon {
-        width: 35px;
-        height: 35px;
-        font-size: 0.9rem;
+    .category-card {
+        padding: 1rem;
+    }
+
+    .category-name {
+        font-size: 1.25rem;
+    }
+
+    .stat-card {
+        padding: 1.5rem;
+    }
+
+    .stat-content h3 {
+        font-size: 1.5rem;
     }
 }
 
 /* Animações */
-@keyframes slideInUp {
+@keyframes fadeInUp {
     from {
         opacity: 0;
         transform: translateY(30px);
@@ -346,30 +834,70 @@
     }
 }
 
-.card-modern {
-    animation: slideInUp 0.6s ease-out;
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
-.table-categories tbody tr {
-    animation: slideInUp 0.6s ease-out;
+.page-header {
+    animation: fadeInUp 0.6s ease-out;
 }
 
-.table-categories tbody tr:nth-child(1) { animation-delay: 0.1s; }
-.table-categories tbody tr:nth-child(2) { animation-delay: 0.2s; }
-.table-categories tbody tr:nth-child(3) { animation-delay: 0.3s; }
-.table-categories tbody tr:nth-child(4) { animation-delay: 0.4s; }
-.table-categories tbody tr:nth-child(5) { animation-delay: 0.5s; }
-
-.modal.fade.show {
-    display: block;
-    background-color: rgba(0, 0, 0, 0.6); /* fundo escurecido */
-    z-index: 1055 !important; /* maior que outros elementos */
+.stat-card {
+    animation: slideInRight 0.6s ease-out;
 }
 
-.modal-backdrop {
-    z-index: 1050 !important;
+.stat-card:nth-child(1) { animation-delay: 0.1s; }
+.stat-card:nth-child(2) { animation-delay: 0.2s; }
+.stat-card:nth-child(3) { animation-delay: 0.3s; }
+
+.category-card {
+    animation: fadeInUp 0.6s ease-out;
 }
 
+.category-card:nth-child(1) { animation-delay: 0.1s; }
+.category-card:nth-child(2) { animation-delay: 0.2s; }
+.category-card:nth-child(3) { animation-delay: 0.3s; }
+.category-card:nth-child(4) { animation-delay: 0.4s; }
+.category-card:nth-child(5) { animation-delay: 0.5s; }
+.category-card:nth-child(6) { animation-delay: 0.6s; }
+
+/* Efeitos de hover adicionais */
+.category-card:hover .category-icon-wrapper {
+    transform: scale(1.1);
+}
+
+.category-card:hover .category-name {
+    color: var(--primary-color);
+}
+
+.stat-card:hover .stat-icon {
+    transform: scale(1.1);
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--secondary-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, #3730a3 100%);
+}
 </style>
 {% endblock %}
 
