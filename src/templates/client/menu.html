@@ -11,7 +11,7 @@
         <div class="col-12">
             <div class="alert alert-info text-center">
                 <i class="fas fa-clock me-2"></i>
-                Horário atual: {{ current_day }} - {{ current_time }}
+                Horário de referência: {{ current_day }} - {{ current_time }}
             </div>
         </div>
     </div>
@@ -49,7 +49,11 @@
                 <div class="card-body d-flex flex-column">
                     <h5 class="card-title">{{ product.name }}</h5>
                     <p class="card-text">{{ product.description or 'Delicioso prato do nosso cardápio.' }}</p>
+                    
+                    <!-- CORREÇÃO DE SEGURANÇA: Verifica se a categoria existe antes de acessá-la -->
+                    {% if product.category %}
                     <small class="text-muted mb-3">Categoria: {{ product.category.name }}</small>
+                    {% endif %}
                     
                     <div class="mt-auto">
                         <!-- Preço com ajustes -->
@@ -79,8 +83,8 @@
                                 <h6 class="text-muted">Personalize seu pedido:</h6>
                                 {% for ingredient in product.ingredient_options %}
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="ingredients" value="{{ ingredient.id }}" id="ingredient_{{ ingredient.id }}">
-                                    <label class="form-check-label" for="ingredient_{{ ingredient.id }}">
+                                    <input class="form-check-input" type="checkbox" name="ingredients" value="{{ ingredient.id }}" id="ingredient_{{ product.id }}_{{ ingredient.id }}">
+                                    <label class="form-check-label" for="ingredient_{{ product.id }}_{{ ingredient.id }}">
                                         {{ ingredient.name }}
                                         {% if ingredient.price_adjustment != 0 %}
                                             {% if ingredient.price_adjustment > 0 %}
@@ -124,11 +128,10 @@
         <a href="{{ url_for('client.cart') }}" class="btn btn-success btn-lg">
             <i class="fas fa-shopping-cart me-2"></i>Ver Carrinho
             {% if session.cart %}
-                ({{ session.cart|length }} itens)
+                <span class="badge bg-danger ms-1">{{ session.cart|length }}</span>
             {% endif %}
         </a>
     </div>
     {% endif %}
 </div>
 {% endblock %}
-
