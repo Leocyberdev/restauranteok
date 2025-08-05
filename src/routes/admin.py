@@ -1,7 +1,9 @@
+
+admin.py
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from src.models.user import User
-from src.models.product import Category, Product
+from src.models.product import Category, Product, ProductAvailability, IngredientOption
 from src.models.order import Order, OrderItem
 from src.models.employee import Employee, TimeRecord
 from src.models.promotion import Promotion, Coupon
@@ -148,7 +150,16 @@ def edit_product(product_id):
         db.session.commit()
         flash("Produto atualizado com sucesso!", "success")
         return redirect(url_for("admin.products"))
-    return render_template("admin/edit_product.html", product=product, categories=categories)
+    
+    # Buscar disponibilidades e ingredientes opcionais do produto
+    availabilities = ProductAvailability.query.filter_by(product_id=product_id).all()
+    ingredient_options = IngredientOption.query.filter_by(product_id=product_id).all()
+    
+    return render_template("admin/edit_product.html", 
+                         product=product, 
+                         categories=categories,
+                         availabilities=availabilities,
+                         ingredient_options=ingredient_options)
 
 @admin_bp.route("/products/delete/<int:product_id>", methods=["POST"])
 @login_required
@@ -508,3 +519,121 @@ def delete_expense(expense_id):
     db.session.commit()
     flash("Despesa excluída com sucesso!", "success")
     return redirect(url_for("admin.expenses"))
+
+
+# Rotas para gerenciar disponibilidade de produtos
+@admin_bp.route("/products/<int:product_id>/availability/add", methods=["POST"])
+@login_required
+def add_product_availability(product_id):
+    product = Product.query.get_or_404(product_id)
+    day_of_week = request.form.get("day_of_week")
+    time_of_day = request.form.get("time_of_day")
+    price_adjustment = float(request.form.get("price_adjustment", 0))
+    
+    # Verificar se já existe uma disponibilidade para este dia/horário
+    existing = ProductAvailability.query.filter_by(
+        product_id=product_id,
+        day_of_week=day_of_week,
+        time_of_day=time_of_day
+    ).first()
+    
+    if existing:
+        flash(f"Já existe uma configuração para {day_of_week} - {time_of_day}", "warning")
+        return redirect(url_for("admin.edit_product", product_id=product_id))
+    
+    availability = ProductAvailability(
+        product_id=product_id,
+        day_of_week=day_of_week,
+        time_of_day=time_of_day,
+        price_adjustment=price_adjustment
+    )
+    db.session.add(availability)
+    db.session.commit()
+    
+    flash("Disponibilidade adicionada com sucesso!", "success")
+    return redirect(url_for("admin.edit_product", product_id=product_id))
+
+@admin_bp.route("/products/availability/<int:availability_id>/delete", methods=["POST"])
+@login_required
+def delete_product_availability(availability_id):
+    availability = ProductAvailability.query.get_or_404(availability_id)
+    product_id = availability.product_id
+    db.session.delete(availability)
+    db.session.commit()
+    
+    flash("Disponibilidade removida com sucesso!", "success")
+    return redirect(url_for("admin.edit_product", product_id=product_id))
+
+# Rotas para gerenciar ingredientes opcionais
+@admin_bp.route("/products/<int:product_id>/ingredient/add", methods=["POST"])
+@login_required
+def add_ingredient_option(product_id):
+    product = Product.query.get_or_404(product_id)
+    name = request.form.get("name")
+    price_adjustment = float(request.form.get("price_adjustment", 0))
+    is_removable = 'is_removable' in request.form
+    
+    ingredient = IngredientOption(
+        product_id=product_id,
+        name=name,
+        price_adjustment=price_adjustment,
+        is_removable=is_removable
+    )
+    db.session.add(ingredient)
+    db.session.commit()
+    
+    flash("Ingrediente opcional adicionado com sucesso!", "success")
+    return redirect(url_for("admin.edit_product", product_id=product_id))
+
+@admin_bp.route("/products/ingredient/<int:ingredient_id>/delete", methods=["POST"])
+@login_required
+def delete_ingredient_option(ingredient_id):
+    ingredient = IngredientOption.query.get_or_404(ingredient_id)
+    product_id = ingredient.product_id
+    db.session.delete(ingredient)
+    db.session.commit()
+    
+    flash("Ingrediente opcional removido com sucesso!", "success")
+    return redirect(url_for("admin.edit_product", product_id=product_id))
+
+# API para obter disponibilidade de produto
+@admin_bp.route("/api/products/<int:product_id>/availability")
+@login_required
+def get_product_availability(product_id):
+    from datetime import datetime
+    import calendar
+    
+    # Obter dia da semana atual (0=Segunda, 6=Domingo)
+    current_weekday = datetime.now().weekday()
+    weekdays = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+    current_day = weekdays[current_weekday]
+    
+    # Obter horário atual (simplificado: antes das 15h = Almoço, depois = Jantar)
+    current_hour = datetime.now().hour
+    current_time = "Almoço" if current_hour < 15 else "Jantar"
+    
+    # Buscar disponibilidades do produto
+    availabilities = ProductAvailability.query.filter_by(product_id=product_id).all()
+    
+    # Verificar se o produto está disponível agora
+    is_available = False
+    current_price_adjustment = 0
+    
+    for availability in availabilities:
+        if (availability.day_of_week == current_day or availability.day_of_week == "Todos") and \
+           (availability.time_of_day == current_time or availability.time_of_day == "Dia Todo"):
+            is_available = True
+            current_price_adjustment = availability.price_adjustment
+            break
+    
+    # Se não há regras específicas, produto está disponível
+    if not availabilities:
+        is_available = True
+    
+    return jsonify({
+        'is_available': is_available,
+        'price_adjustment': current_price_adjustment,
+        'current_day': current_day,
+        'current_time': current_time
+    })
+
