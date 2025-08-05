@@ -49,12 +49,12 @@
                 </div>
 
                 <!-- Mensagens de erro/sucesso -->
-                {% with messages = get_flashed_messages() %}
+                {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         <div class="alert-container">
-                            {% for message in messages %}
-                                <div class="alert">
-                                    <i class="fas fa-exclamation-circle"></i>
+                            {% for category, message in messages %}
+                                <div class="alert {% if category == 'success' %}success{% endif %}">
+                                    <i class="fas {% if category == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
                                     <span>{{ message }}</span>
                                 </div>
                             {% endfor %}
@@ -118,13 +118,6 @@
                             <input type="tel" id="register-phone" name="phone" placeholder="Telefone" required>
                         </div>
                         </div>
-
-                    <div class="input-group">
-                        <div class="input-wrapper">
-                            <i class="fas fa-id-card"></i>
-                            <input type="text" id="register-cpf" name="cpf" placeholder="CPF" required>
-                        </div>
-                    </div>
 
                     <div class="input-group">
                         <div class="input-wrapper">
