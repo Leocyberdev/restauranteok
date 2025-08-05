@@ -58,4 +58,3 @@ class IngredientOption(db.Model):
         return f"<IngredientOption Product:{self.product_id} Name:{self.name}>"
 
 
-Variação de horário e ingredientes opcionais no projeto - Manus
