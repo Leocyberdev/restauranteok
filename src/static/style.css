@@ -189,7 +189,7 @@ a:hover {
 .badge.bg-gradient-primary {
     background-color: #007bff !important; /* Cor de fundo sólida */
     opacity: 1 !important; /* Garante que não está transparente */
-    color: white !important; /* Cor do texto para contraste */
+    color: #000000 !important; /* Cor do texto para contraste */
     font-weight: bold !important; /* Deixa o texto em negrito */
 }
 
