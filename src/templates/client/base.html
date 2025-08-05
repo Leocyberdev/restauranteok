@@ -82,7 +82,7 @@
                 <ul class="navbar-nav">
                     <li class="nav-item">
                         <a class="nav-link position-relative" href="{{ url_for('client.cart') }}">
-                            <i class="fas fa-shopping-cart"></i>
+                            <i class="fas fa-shopping-cart"></i> Meu carrinho
                             {% if session.cart %}
                                 <span class="cart-badge">{{ session.cart.values() | sum }}</span>
                             {% endif %}
