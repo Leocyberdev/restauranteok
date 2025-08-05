@@ -94,12 +94,27 @@ def dashboard():
                          final_balance=final_balance,
                          estimated_product_cost=estimated_product_cost)
 
+# Em src/routes/admin.py
+
 @admin_bp.route("/products")
 @login_required
 def products():
-    products = Product.query.all()
+    # 1. Pega todos os IDs de produtos que estão na tabela de itens de pedido (order_items)
+    # O .distinct() garante que cada ID apareça apenas uma vez.
+    sold_product_ids = db.session.query(OrderItem.product_id).distinct().all()
+    # sold_product_ids será uma lista de tuplas, como [(1,), (3,), (5,)]
+    # Vamos converter para um conjunto (set) para busca rápida: {1, 3, 5}
+    sold_product_ids_set = {item[0] for item in sold_product_ids}
+
+    # 2. Pega todos os produtos
+    all_products = Product.query.all()
     categories = Category.query.all()
-    return render_template("admin/products.html", products=products, categories=categories)
+
+    # 3. Passa a lista de produtos, as categorias e o conjunto de IDs vendidos para o template
+    return render_template("admin/products.html", 
+                           products=all_products, 
+                           categories=categories, 
+                           sold_product_ids=sold_product_ids_set)
 
 @admin_bp.route("/products/add", methods=["POST"])
 @login_required
