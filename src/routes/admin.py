@@ -189,6 +189,12 @@ def edit_category(category_id):
 @login_required
 def delete_category(category_id):
     category = Category.query.get_or_404(category_id)
+    
+    # Desvincular produtos desta categoria
+    for product in category.products:
+        product.category_id = None  # Ou defina para uma categoria padrão, ou exclua o produto
+    db.session.commit()
+
     db.session.delete(category)
     db.session.commit()
     flash("Categoria excluída com sucesso!")
